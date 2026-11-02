@@ -26,9 +26,44 @@ const queuePanel = $('#queuePanel');
 const repeatBtn = $('#repeatBtn');
 const toast = $('#toast');
 
-// Private admin mode: open the site with ?admin=1 to curate.
-// Visitors never see this (no link to it anywhere on the page).
-const ADMIN = new URLSearchParams(location.search).has('admin');
+// Private admin (dev) mode: curate tracks. Activated via ?admin=1 / #admin=1,
+// a discreet corner toggle, or a persisted choice — so it keeps working on
+// hosts (like GitHub Pages) where query strings can be dropped/normalized.
+const ADMIN_HASH = (typeof window !== 'undefined' && window.QWIK_ADMIN_HASH ? String(window.QWIK_ADMIN_HASH).trim() : '');
+let ADMIN = false;
+function readAdminParam() {
+  try {
+    const q = new URLSearchParams(location.search);
+    if (q.has('admin')) return q.get('admin') !== '0' && q.get('admin') !== 'false';
+    const h = (location.hash || '').replace(/^#/, '');
+    if (h) {
+      const hp = new URLSearchParams(h.includes('=') ? h : 'admin=' + h);
+      if (hp.has('admin')) return hp.get('admin') !== '0' && hp.get('admin') !== 'false';
+    }
+  } catch {}
+  return null;
+}
+// When an admin password hash is configured (via env at deploy time), URL params
+// cannot bypass it; only a persisted, password-gated session counts.
+if (!ADMIN_HASH) {
+  const _adminParam = readAdminParam();
+  if (_adminParam !== null) {
+    ADMIN = _adminParam;
+    try { localStorage.setItem('adminMode', ADMIN ? '1' : '0'); } catch {}
+  } else {
+    try { ADMIN = localStorage.getItem('adminMode') === '1'; } catch { ADMIN = false; }
+  }
+} else {
+  try { ADMIN = localStorage.getItem('adminMode') === '1'; } catch { ADMIN = false; }
+}
+async function adminPasswordOk(pw) {
+  if (!ADMIN_HASH || !pw) return false;
+  try {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(pw));
+    const hex = [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
+    return hex === ADMIN_HASH.toLowerCase();
+  } catch { return false; }
+}
 // Local visibility overrides (id -> true = hidden). Export writes them to songs.json.
 let localVis = {};
 try { localVis = JSON.parse(localStorage.getItem('visOverrides') || '{}'); } catch { localVis = {}; }
@@ -116,11 +151,13 @@ function isBadArt(url) {
   if (!url) return true;
   return url.includes('fb_placeholder') || url.includes('placeholder') || url.includes('default');
 }
+function defaultArtwork() { try { return localStorage.getItem('defaultArtwork') || ''; } catch { return ''; } }
 function artFor(s, fallbackEmoji = '♪') {
-  if (s?.artwork && !isBadArt(s.artwork)) {
-    return `<img src="${s.artwork}" alt="${escapeHtml(s.title || 'cover')}" loading="lazy" draggable="false" referrerpolicy="no-referrer" data-t="${escapeHtml(s.title || '?')}" onerror="this.onerror=null;this.src=window.__artFallback(this.dataset.t)" />`;
+  const art = (s?.artwork && !isBadArt(s.artwork)) ? s.artwork : (defaultArtwork() || '');
+  if (art) {
+    return `<img src="${art}" alt="${escapeHtml(s?.title || 'cover')}" loading="lazy" draggable="false" referrerpolicy="no-referrer" data-t="${escapeHtml(s?.title || '?')}" onerror="this.onerror=null;this.src=window.__artFallback(this.dataset.t)" />`;
   }
-  if (s?.artwork) return `<img src="${window.__artFallback(s.title)}" alt="${escapeHtml(s.title || 'cover')}" draggable="false" />`;
+  if (s?.artwork) return `<img src="${window.__artFallback(s?.title)}" alt="${escapeHtml(s?.title || 'cover')}" draggable="false" />`;
   return fallbackEmoji;
 }
 function peaksFor(id, n = 96) {
@@ -174,6 +211,7 @@ function renderTracks() {
       <div class="admin-controls">
         <input type="checkbox" class="admin-check" data-id="${s.id}" title="Select for bulk actions" />
         <button data-act="${hidden ? 'show' : 'hide'}" class="ghost">${hidden ? '👁 Show' : '🚫 Hide'}</button>
+        <button data-act="edit" class="ghost">✏ Edit</button>
         <button data-act="moveUp" class="ghost" title="Move up">↑</button>
         <button data-act="moveDown" class="ghost" title="Move down">↓</button>
       </div>` : '';
@@ -346,6 +384,7 @@ trackListEl.addEventListener('click', (e) => {
   if (act === 'next') enqueue(id, true);
   if (act === 'hide') setVisible(id, false);
   if (act === 'show') setVisible(id, true);
+  if (act === 'edit' && ADMIN) { const s = songById(id); if (s) openEdit(s); }
   if (act === 'moveUp' && ADMIN) {
     const idx = SONGS.findIndex((s) => s.id === id);
     if (idx > 0) { [SONGS[idx - 1], SONGS[idx]] = [SONGS[idx], SONGS[idx - 1]]; renderTracks(); }
@@ -446,15 +485,24 @@ $('#clearBtn').onclick = () => {
     }
   }, 100);
 };
-$('#queueToggle').onclick = () => queuePanel.classList.toggle('hidden');
+$('#queueToggle').onclick = () => {
+  const open = queuePanel.classList.toggle('open');
+  const bd = $('#queueBackdrop');
+  if (bd) bd.hidden = !open;
+};
+const qbd = $('#queueBackdrop');
+if (qbd) qbd.addEventListener('click', () => {
+  queuePanel.classList.remove('open');
+  qbd.hidden = true;
+});
 // Horizontal rail: arrows scroll by ~2 cards; swipe/drag works natively.
 function railStep(dir) {
   const card = trackListEl.querySelector('.track');
   const w = card ? card.getBoundingClientRect().width + 12 : 480;
   trackListEl.scrollBy({ left: dir * w * 2, behavior: 'smooth' });
 }
-$('#railPrev').onclick = () => railStep(-1);
-$('#railNext').onclick = () => railStep(1);
+const railPrev = $('#railPrev'); if (railPrev) railPrev.onclick = () => railStep(-1);
+const railNext = $('#railNext'); if (railNext) railNext.onclick = () => railStep(1);
 // Arrow keys move the rail when it's focused.
 trackListEl.addEventListener('keydown', (e) => {
   if (e.key === 'ArrowRight') { e.preventDefault(); railStep(1); }
@@ -497,6 +545,77 @@ function seekBy(sec) {
   }
 }
 
+// --- admin edit modal ---
+function genId() { return 'tr-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+function openEdit(track) {
+  const modal = $('#editModal');
+  if (!modal) return;
+  $('#editModalTitle').textContent = track ? 'Edit track' : 'Add track';
+  $('#editId').value = track ? track.id : '';
+  $('#editTitleInput').value = track?.title || '';
+  $('#editArtist').value = track?.artist || '';
+  $('#editEngine').value = track?.engine === 'soundcloud' ? 'soundcloud' : 'audio';
+  $('#editAudioUrl').value = track?.audioUrl || '';
+  $('#editScId').value = track?.soundcloudTrackId || '';
+  $('#editArtwork').value = track?.artwork || '';
+  $('#editSourceUrl').value = track?.sourceUrl || '';
+  $('#editAltSourceUrl').value = track?.altSourceUrl || '';
+  $('#editDuration').value = track?.durationSec || '';
+  $('#editVisible').checked = track ? (track.visible !== false && !isHidden(track)) : true;
+  $('#editDelete').style.display = track ? '' : 'none';
+  modal.hidden = false;
+}
+function closeEdit() { const m = $('#editModal'); if (m) m.hidden = true; }
+
+const editForm = $('#editForm');
+if (editForm) {
+  editForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const id = $('#editId').value.trim() || genId();
+    const engine = $('#editEngine').value;
+    const altUrl = $('#editAltSourceUrl').value.trim();
+    const data = {
+      id,
+      title: $('#editTitleInput').value.trim() || 'Untitled',
+      artist: $('#editArtist').value.trim() || 'Qwik',
+      engine,
+      audioUrl: $('#editAudioUrl').value.trim(),
+      soundcloudTrackId: $('#editScId').value.trim(),
+      artwork: $('#editArtwork').value.trim(),
+      sourceUrl: $('#editSourceUrl').value.trim(),
+      altSourceUrl: altUrl,
+      altSource: altUrl ? 'soundcloud' : undefined,
+      durationSec: Number($('#editDuration').value) || 0,
+      source: engine === 'soundcloud' ? 'soundcloud' : 'bandlab',
+      visible: $('#editVisible').checked,
+    };
+    const idx = SONGS.findIndex((s) => s.id === id);
+    if (idx >= 0) SONGS[idx] = { ...SONGS[idx], ...data };
+    else SONGS.push(data);
+    delete localVis[id];
+    try { localStorage.setItem('visOverrides', JSON.stringify(localVis)); } catch {}
+    closeEdit();
+    renderTracks();
+    showToast('Track saved');
+  });
+}
+const editCancel = $('#editCancel');
+if (editCancel) editCancel.addEventListener('click', closeEdit);
+const editDelete = $('#editDelete');
+if (editDelete) editDelete.addEventListener('click', () => {
+  const id = $('#editId').value.trim();
+  if (!id) { closeEdit(); return; }
+  if (!confirm('Delete this track?')) return;
+  SONGS = SONGS.filter((s) => s.id !== id);
+  delete localVis[id];
+  try { localStorage.setItem('visOverrides', JSON.stringify(localVis)); } catch {}
+  QUEUE = QUEUE.filter((x) => x !== id);
+  save(); closeEdit(); renderTracks(); renderQueue();
+  showToast('Track deleted');
+});
+const editModal = $('#editModal');
+if (editModal) editModal.addEventListener('click', (e) => { if (e.target === editModal) closeEdit(); });
+
 // boot
 try {
   const res = await fetch('./songs.json', { cache: 'no-store' });
@@ -523,28 +642,86 @@ QUEUE.slice(0, 3).forEach((id) => {
 });
 QUEUE = QUEUE.filter((id) => songById(id) && !isHidden(songById(id)));
 if (!QUEUE.length) QUEUE = visibleSongs().map((s) => s.id);
-if (ADMIN) {
-  $('#adminBar').hidden = false;
-  $('#exportBtn').onclick = () => {
-    const out = SONGS.map((s, i) => ({ ...s, order: i, visible: !isHidden(s) }));
-    const blob = new Blob([JSON.stringify(out, null, 2) + '\n'], { type: 'application/json' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'songs.json';
-    a.click();
-    URL.revokeObjectURL(a.href);
-  };
-  $('#bulkHideBtn').onclick = () => {
-    const checked = trackListEl.querySelectorAll('.admin-check:checked');
-    checked.forEach((cb) => setVisible(cb.dataset.id, false));
-    showToast(`Hidden ${checked.length} track${checked.length === 1 ? '' : 's'}`);
-  };
-  $('#bulkShowBtn').onclick = () => {
-    const checked = trackListEl.querySelectorAll('.admin-check:checked');
-    checked.forEach((cb) => setVisible(cb.dataset.id, true));
-    showToast(`Shown ${checked.length} track${checked.length === 1 ? '' : 's'}`);
-  };
+function setupAdminUI() {
+  const bar = $('#adminBar');
+  if (!ADMIN) {
+    if (bar) bar.hidden = true;
+    const btn = $('#devToggle');
+    if (btn) btn.classList.remove('on');
+    return;
+  }
+  if (bar) bar.hidden = false;
+  const btn = $('#devToggle');
+  if (btn) btn.classList.add('on');
+  const exportBtn = $('#exportBtn');
+  if (exportBtn && !exportBtn._wired) {
+    exportBtn._wired = true;
+    exportBtn.onclick = () => {
+      const da = defaultArtwork();
+      const out = SONGS.map((s, i) => ({ ...s, order: i, visible: !isHidden(s), artwork: (s.artwork && !isBadArt(s.artwork)) ? s.artwork : (da || s.artwork || '') }));
+      const blob = new Blob([JSON.stringify(out, null, 2) + '\n'], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'songs.json';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    };
+  }
+  const bulkHideBtn = $('#bulkHideBtn');
+  if (bulkHideBtn && !bulkHideBtn._wired) {
+    bulkHideBtn._wired = true;
+    bulkHideBtn.onclick = () => {
+      const checked = trackListEl.querySelectorAll('.admin-check:checked');
+      checked.forEach((cb) => setVisible(cb.dataset.id, false));
+      showToast(`Hidden ${checked.length} track${checked.length === 1 ? '' : 's'}`);
+    };
+  }
+  const bulkShowBtn = $('#bulkShowBtn');
+  if (bulkShowBtn && !bulkShowBtn._wired) {
+    bulkShowBtn._wired = true;
+    bulkShowBtn.onclick = () => {
+      const checked = trackListEl.querySelectorAll('.admin-check:checked');
+      checked.forEach((cb) => setVisible(cb.dataset.id, true));
+      showToast(`Shown ${checked.length} track${checked.length === 1 ? '' : 's'}`);
+    };
+  }
+  const addTrackBtn = $('#addTrackBtn');
+  if (addTrackBtn && !addTrackBtn._wired) {
+    addTrackBtn._wired = true;
+    addTrackBtn.onclick = () => openEdit(null);
+  }
+  const defaultCoverBtn = $('#defaultCoverBtn');
+  if (defaultCoverBtn && !defaultCoverBtn._wired) {
+    defaultCoverBtn._wired = true;
+    defaultCoverBtn.onclick = () => {
+      const url = window.prompt('Default cover image URL (blank to clear):', defaultArtwork());
+      if (url === null) return;
+      try { localStorage.setItem('defaultArtwork', url.trim()); } catch {}
+      renderTracks();
+      showToast(url.trim() ? 'Default cover set' : 'Default cover cleared');
+    };
+  }
 }
+function setAdmin(on) {
+  ADMIN = !!on;
+  try { localStorage.setItem('adminMode', ADMIN ? '1' : '0'); } catch {}
+  setupAdminUI();
+  renderTracks();
+  showToast(ADMIN ? 'Dev mode ON' : 'Dev mode OFF');
+}
+const devToggle = $('#devToggle');
+if (devToggle) {
+  devToggle.addEventListener('click', async () => {
+    if (ADMIN) { setAdmin(false); return; }
+    if (!ADMIN_HASH) { setAdmin(true); return; }
+    const pw = window.prompt('Admin password:');
+    if (pw === null) return;
+    if (await adminPasswordOk(pw)) setAdmin(true);
+    else showToast('Wrong password');
+  });
+  devToggle.addEventListener('contextmenu', (e) => { e.preventDefault(); setAdmin(false); });
+}
+setupAdminUI();
 renderTracks(); renderQueue(); drawWave(0);
 if (currentId && songById(currentId)) playId(currentId, { autoplay: false });
 else if (visibleSongs()[0]) {

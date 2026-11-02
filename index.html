@@ -39,8 +39,10 @@
   </header>
 
   <div id="adminBar" class="adminbar" hidden>
-    <span>🔧 ADMIN (only you — via ?admin=1) · <span id="adminCount"></span></span>
+    <span>🔧 DEV MODE (private curation) · <span id="adminCount"></span></span>
     <button id="exportBtn">⬇ Export songs.json</button>
+    <button id="addTrackBtn" class="ghost">+ Add track</button>
+    <button id="defaultCoverBtn" class="ghost">Set default cover</button>
     <button id="bulkHideBtn" class="ghost">Hide selected</button>
     <button id="bulkShowBtn" class="ghost">Show selected</button>
     <span class="admin-hint">Hide/Show tracks, then Export and replace songs.json to make it live for everyone.</span>
@@ -56,7 +58,7 @@
           <button id="railNext" class="rail-btn" title="Scroll right">›</button>
         </div>
       </div>
-      <div id="trackList" class="track-list rail" tabindex="0" aria-label="Track carousel">
+      <div id="trackList" class="track-list" tabindex="0" aria-label="Track list">
         <div class="skeleton-card"></div>
         <div class="skeleton-card"></div>
         <div class="skeleton-card"></div>
@@ -73,6 +75,7 @@
       </p>
     </section>
 
+    <div id="queueBackdrop" class="queue-backdrop" hidden></div>
     <aside class="queue-col" id="queuePanel">
       <div class="section-head">
         <h2>Up Next</h2>
@@ -121,6 +124,36 @@
   </footer>
 
   <div id="toast" class="toast" hidden></div>
+  <div id="editModal" class="modal" hidden>
+    <div class="modal-card">
+      <h2 id="editModalTitle">Edit track</h2>
+      <form id="editForm">
+        <input type="hidden" id="editId" />
+        <label>Title<input id="editTitleInput" required /></label>
+        <label>Artist<input id="editArtist" /></label>
+        <label>Engine
+          <select id="editEngine">
+            <option value="audio">audio (direct file)</option>
+            <option value="soundcloud">soundcloud</option>
+          </select>
+        </label>
+        <label>Audio URL (private link OK)<input id="editAudioUrl" placeholder="https://...m4a or SoundCloud track id below" /></label>
+        <label>SoundCloud track id<input id="editScId" placeholder="numeric id (soundcloud engine)" /></label>
+        <label>Artwork URL<input id="editArtwork" placeholder="image url; blank = default cover" /></label>
+        <label>Source URL (original page)<input id="editSourceUrl" /></label>
+        <label>Alt source URL<input id="editAltSourceUrl" /></label>
+        <label>Duration (sec)<input id="editDuration" type="number" min="0" /></label>
+        <label class="checkrow"><input id="editVisible" type="checkbox" checked /> Visible to everyone</label>
+        <div class="modal-actions">
+          <button type="submit" class="play">Save</button>
+          <button type="button" id="editCancel" class="ghost">Cancel</button>
+          <button type="button" id="editDelete" class="ghost danger">Delete track</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <button id="devToggle" class="dev-toggle" title="Toggle dev mode" aria-label="Toggle dev mode">⚙</button>
+  <script src="./config.js"></script>
   <script src="./app.js" type="module"></script>
 </body>
 </html>

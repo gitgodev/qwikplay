@@ -23,10 +23,17 @@ npx serve . -l 5173
 
 ## Curate what shows (private admin)
 
-Open `http://localhost:5173/index.html?admin=1` — only you, there's no link to
-it on the page:
+Admin mode can be toggled with the discreet ⚙ button in the bottom-right corner
+(no URL needed — works on any host, including GitHub Pages), or by opening the
+site with `?admin=1` / `#admin=1`:
 
-- Every track gets **🚫 Hide / 👁 Show**. Hidden tracks vanish from the list,
+- Your choice is remembered on this browser (localStorage). The ⚙ button is
+  deliberately subtle so visitors are unlikely to find it.
+
+- Every track gets **🚫 Hide / 👁 Show**, **✏ Edit** (title, artist, artwork URL,
+  private audio URL, source links, duration, visible flag), **+ Add track**, and
+  **Set default cover** for tracks without artwork. Hidden tracks vanish from the
+  list,
   queue, search and deep-links for everyone else (dimmed preview for you).
 - **⬇ Export songs.json** downloads the catalog with your choices baked in —
   replace `songs.json` with it to make it live for everyone.
@@ -51,6 +58,16 @@ Pulls your live profiles and rewrites `songs.json`:
 
 GitHub Action (`.github/workflows/sync.yml`) runs this daily at 09:00 UTC and
 commits `songs.json` — no secrets needed, no dependencies.
+
+## Deploy on GitHub Pages
+
+1. Push to `main`. The `deploy-pages` workflow builds and publishes the site.
+2. In repo settings → Pages → Source: **GitHub Actions**.
+3. (Optional) Add a repo secret `ADMIN_PASSWORD`. The workflow injects its
+   SHA-256 hash into `config.js`; the ⚙ toggle then requires that password.
+   Without the secret, dev mode stays open (local-dev behavior).
+4. Daily sync (`daily-sync.yml`) still commits `songs.json` to `main`, which
+   re-triggers a deploy.
 
 ## Deploy on Render (when ready, other account)
 
