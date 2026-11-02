@@ -1,0 +1,8 @@
+# audio masters are hosted in Cloudflare R2 (not in git).
+# Keep this folder for local dev drops only.
+*.mp3
+*.wav
+*.flac
+*.m4a
+node_modules/
+.DS_Store

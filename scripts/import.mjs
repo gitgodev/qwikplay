@@ -1,0 +1,123 @@
+// Import: builds songs.json from your real profiles.
+// - SoundCloud: scrape /aaron2z/tracks noscript links + official oEmbed per track
+// - BandLab: public posts API (your own songs) -> direct mixdown .m4a streaming
+// - Dedupe: same song on both platforms -> ONE entry (BandLab direct audio wins,
+//   SoundCloud kept as alt link so plays still flow if listener clicks through)
+// - Preserves your curation: `visible:false` and manual `audioUrl` overrides in
+//   the existing songs.json survive re-imports (matched by id).
+// Run: node scripts/import.mjs
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+
+const SONGS_PATH = new URL('../songs.json', import.meta.url);
+const SC_PROFILE = 'https://soundcloud.com/aaron2z/tracks';
+const BL_POSTS = 'https://www.bandlab.com/api/v1.3/users/realqwik/posts?count=50';
+const UA = { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36' };
+
+function slug(s) {
+  return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'track';
+}
+// Normalize for dupe detection: case/punct-insensitive, ignore leading 'qwik - ' / 'qwik'.
+function normTitle(t) {
+  return t.toLowerCase().replace(/[^a-z0-9]+/g, '').replace(/^qwik/, '').replace(/qwik$/, '').replace(/^the/, '');
+}
+
+// --- keep prior curation ---
+let prev = [];
+try { if (existsSync(SONGS_PATH)) prev = JSON.parse(readFileSync(SONGS_PATH, 'utf8')); } catch {}
+const prevById = new Map(prev.map((s) => [s.id, s]));
+
+// --- SoundCloud ---
+console.log('Fetching SoundCloud profile…');
+const scHtml = await (await fetch(SC_PROFILE, { headers: UA })).text();
+const links = [...new Set(
+  [...scHtml.matchAll(/href="(\/aaron2z\/[a-z0-9-]+)"/gi)].map((m) => m[1])
+    .filter((p) => !['/aaron2z/likes', '/aaron2z/sets', '/aaron2z/tracks', '/aaron2z/comments', '/aaron2z/popular-tracks', '/aaron2z/albums'].includes(p))
+)];
+console.log(`found ${links.length} SC tracks`);
+const scTracks = [];
+for (const path of links) {
+  const url = `https://soundcloud.com${path}`;
+  try {
+    const r = await fetch(`https://soundcloud.com/oembed?format=json&url=${encodeURIComponent(url)}`, { headers: UA });
+    if (!r.ok) { console.warn('  skip', url, r.status); continue; }
+    const j = await r.json();
+    const trackId = (j.html.match(/tracks%2F(\d+)/) || j.html.match(/tracks\/(\d+)/) || [])[1] || '';
+    scTracks.push({
+      id: 'sc-' + slug(path.split('/').pop()),
+      title: j.title.replace(/\s+by\s+Qwik$/i, ''),
+      artist: 'Qwik',
+      engine: 'soundcloud',
+      soundcloudTrackId: trackId,
+      audioUrl: '',
+      artwork: (j.thumbnail_url || '').replace('-large.', '-t500x500.'),
+      durationSec: 0,
+      source: 'soundcloud',
+      sourceUrl: url,
+      releaseDate: '',
+    });
+  } catch (e) { console.warn('  err', url, e.message); }
+}
+
+// --- BandLab ---
+console.log('Fetching BandLab posts…');
+const bl = await (await fetch(BL_POSTS, { headers: { ...UA, Accept: 'application/json' } })).json();
+const seen = new Map();
+for (const p of bl.data || []) {
+  const rev = p.revision || {};
+  const song = rev.song || {};
+  if (!song.id || seen.has(song.id)) continue;
+  const mix = rev.mixdown || {};
+  if (!mix.file) continue;
+  seen.set(song.id, {
+    id: 'bl-' + slug(song.slug || song.name),
+    title: song.name,
+    artist: 'qwik',
+    engine: 'audio',
+    audioUrl: mix.file,
+    artwork: (song.picture?.url || '') + '500x500',
+    durationSec: Math.round(mix.duration || 0),
+    source: 'bandlab',
+    sourceUrl: `https://www.bandlab.com/realqwik/${song.slug || ''}`,
+    releaseDate: (rev.createdOn || '').slice(0, 10),
+    plays: rev.counters?.plays || 0,
+  });
+}
+const blTracks = [...seen.values()].sort((a, b) => (b.plays || 0) - (a.plays || 0));
+console.log(`found ${blTracks.length} BandLab songs`);
+
+// --- Dedupe: same song both places -> keep BandLab (direct audio), link SC as alt ---
+const blByNorm = new Map();
+for (const t of blTracks) {
+  const k = normTitle(t.title);
+  if (!blByNorm.has(k)) blByNorm.set(k, []);
+  blByNorm.get(k).push(t);
+}
+const keptSc = [];
+let merged = 0;
+for (const sc of scTracks) {
+  const k = normTitle(sc.title);
+  const blGroup = blByNorm.get(k);
+  if (blGroup?.length) {
+    const top = [...blGroup].sort((a, b) => (b.plays || 0) - (a.plays || 0))[0];
+    if (!top.altSourceUrl) { top.altSourceUrl = sc.sourceUrl; top.altSource = 'soundcloud'; }
+    merged++;
+    console.log(`  merge: "${sc.title}" -> BandLab entry (SC kept as alt link)`);
+  } else keptSc.push(sc);
+}
+
+// --- Re-apply curation, default visible ---
+const all = [...keptSc, ...blTracks].map((t) => {
+  const old = prevById.get(t.id);
+  // A manual audioUrl (e.g. you pointed a track at your own R2 file) survives
+  // re-imports; anything on BandLab's CDN is refreshed from upstream.
+  const manualAudio = old?.audioUrl && !old.audioUrl.startsWith('https://static.bandlab.com')
+    ? old.audioUrl : null;
+  return {
+    ...t,
+    visible: old?.visible ?? true,
+    ...(manualAudio ? { audioUrl: manualAudio, engine: 'audio' } : {}),
+  };
+});
+writeFileSync(SONGS_PATH, JSON.stringify(all, null, 2) + '\n');
+const hidden = all.filter((t) => t.visible === false).length;
+console.log(`\nwrote songs.json: ${all.length} entries (${keptSc.length} SC-only + ${blTracks.length} BandLab, ${merged} SC merged as alt links${hidden ? `, ${hidden} hidden by you` : ''})`);

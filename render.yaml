@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: music-player
+    runtime: static
+    repo: https://github.com/YOU/musicplayersite
+    branch: main
+    buildCommand: ""
+    staticPublishPath: ./
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    headers:
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      # Deterrence: don't advertise byte ranges as downloadable attachments.
+      # Real protection = signed URLs / HLS in V2 (see README).

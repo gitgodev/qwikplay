@@ -1,0 +1,25 @@
+name: daily-sync
+
+on:
+  schedule:
+    - cron: "0 9 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      # No npm install needed: import.mjs uses only Node fetch + fs.
+      - run: node scripts/import.mjs
+      - name: commit if changed
+        run: |
+          git config user.name "sync-bot"
+          git config user.email "sync-bot@users.noreply.github.com"
+          git diff --quiet songs.json || (git add songs.json && git commit -m "chore: daily catalog sync" && git push)

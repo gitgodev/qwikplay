@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Qwik — stream only</title>
+  <meta name="description" content="Qwik — minimal streaming player. Up Next queue, no downloads." />
+  <meta property="og:title" content="Qwik — stream only" />
+  <meta property="og:description" content="Minimal streaming player. Up Next queue, no downloads." />
+  <meta property="og:type" content="website" />
+  <meta name="theme-color" content="#0b0d12" />
+  <link rel="icon" href="data:," />
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="stylesheet" href="./styles.css" />
+  <link rel="preconnect" href="https://static.bandlab.com" />
+  <link rel="preconnect" href="https://bl-prod-images.azureedge.net" />
+  <link rel="preconnect" href="https://w.soundcloud.com" />
+  <script src="https://w.soundcloud.com/player/api.js"></script>
+</head>
+<body>
+  <div class="bg-glow" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="disc" aria-hidden="true"><span></span></div>
+      <div>
+        <div class="brand-name" id="artistName">QWIK</div>
+        <div class="brand-sub">soundcloud + bandlab &middot; stream only</div>
+      </div>
+    </div>
+    <div class="top-actions">
+      <input id="search" type="search" placeholder="Search tracks…" autocomplete="off" />
+      <select id="sourceFilter" aria-label="Filter by source">
+        <option value="all">All sources</option>
+        <option value="soundcloud">SoundCloud</option>
+        <option value="bandlab">BandLab</option>
+      </select>
+    </div>
+  </header>
+
+  <div id="adminBar" class="adminbar" hidden>
+    <span>🔧 ADMIN (only you — via ?admin=1) · <span id="adminCount"></span></span>
+    <button id="exportBtn">⬇ Export songs.json</button>
+    <button id="bulkHideBtn" class="ghost">Hide selected</button>
+    <button id="bulkShowBtn" class="ghost">Show selected</button>
+    <span class="admin-hint">Hide/Show tracks, then Export and replace songs.json to make it live for everyone.</span>
+  </div>
+
+  <main class="layout">
+    <section class="tracks-col">
+      <div class="section-head">
+        <h1>Tracks</h1>
+        <div class="rail-nav">
+          <span id="count" class="count"></span>
+          <button id="railPrev" class="rail-btn" title="Scroll left">‹</button>
+          <button id="railNext" class="rail-btn" title="Scroll right">›</button>
+        </div>
+      </div>
+      <div id="trackList" class="track-list rail" tabindex="0" aria-label="Track carousel">
+        <div class="skeleton-card"></div>
+        <div class="skeleton-card"></div>
+        <div class="skeleton-card"></div>
+        <div class="skeleton-card"></div>
+        <div class="skeleton-card"></div>
+        <div class="skeleton-card"></div>
+      </div>
+      <div id="swipeHint" class="swipe-hint" hidden>← swipe to explore →</div>
+      <p class="fineprint">
+        Streaming only — no downloads. BandLab tracks stream direct from your
+        public BandLab files; SoundCloud tracks play through SoundCloud's official
+        widget hidden behind this custom skin (charts/plays still count).
+        Original pages stay linked per track.
+      </p>
+    </section>
+
+    <aside class="queue-col" id="queuePanel">
+      <div class="section-head">
+        <h2>Up Next</h2>
+        <div class="queue-tools">
+          <button id="shuffleBtn" class="ghost" title="Shuffle queue">Shuffle</button>
+          <button id="clearBtn" class="ghost" title="Clear queue">Clear</button>
+        </div>
+      </div>
+      <ol id="queueList" class="queue-list"></ol>
+      <div class="now-card">
+        <canvas id="wave" width="600" height="120"></canvas>
+        <div class="now-meta">
+          <div id="nowTitle" class="now-title">Nothing playing</div>
+          <div id="nowArtist" class="now-artist">Pick a track to start</div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <footer class="playerbar">
+    <div class="pb-left">
+      <div id="pbArt" class="pb-art">♪</div>
+      <div class="pb-titles">
+        <div id="pbTitle">—</div>
+        <div id="pbTime">0:00 / 0:00</div>
+      </div>
+    </div>
+    <div class="pb-center">
+      <div class="pb-buttons">
+        <button id="prevBtn" title="Previous (P)">⏮</button>
+        <button id="playBtn" class="play" title="Play / pause (Space)">▶</button>
+        <button id="nextBtn" title="Next (N)">⏭</button>
+        <button id="repeatBtn" title="Repeat mode">🔁</button>
+      </div>
+      <input id="seek" type="range" min="0" max="1000" value="0" aria-label="Seek" />
+    </div>
+    <div class="pb-right">
+      <label class="vol">Vol <input id="vol" type="range" min="0" max="100" value="90" /></label>
+      <button id="queueToggle" class="ghost">Queue <span id="queueBadge" class="queue-badge" hidden></span></button>
+    </div>
+    <!-- BandLab/direct engine -->
+    <audio id="audio" preload="none" controlsList="nodownload noplaybackrate" disablepictureinpicture></audio>
+    <!-- SoundCloud engine: official widget, visually hidden, driven by custom UI.
+         Pre-loaded with a real track URL so the Widget API can bind on first use. -->
+    <iframe id="scFrame" title="SoundCloud player" src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/2409782406&amp;auto_play=false&amp;show_artwork=false&amp;visual=false" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none" allow="autoplay"></iframe>
+  </footer>
+
+  <div id="toast" class="toast" hidden></div>
+  <script src="./app.js" type="module"></script>
+</body>
+</html>

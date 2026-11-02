@@ -1,0 +1,12 @@
+{
+  "name": "musicplayersite",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Qwik — minimal streaming-only music player, static site for Render",
+  "scripts": {
+    "dev": "npx serve . -l 5173",
+    "import": "node scripts/import.mjs",
+    "check": "node --check app.js && node --check scripts/import.mjs && node -e \"JSON.parse(require('fs').readFileSync('songs.json','utf8')); console.log('songs.json OK')\""
+  }
+}
