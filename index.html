@@ -137,7 +137,10 @@
             <option value="soundcloud">soundcloud</option>
           </select>
         </label>
-        <label>Audio URL (private link OK)<input id="editAudioUrl" placeholder="https://...m4a or SoundCloud track id below" /></label>
+        <label>Audio URL / private link
+          <input id="editAudioUrl" placeholder="Direct audio file URL (.m4a) for 'audio' engine; full SoundCloud URL (with secret_token) for private SC tracks" />
+        </label>
+        <p class="fineprint" style="margin:-4px 0 6px">BandLab share-page links won't play — use the direct .m4a file or host the file yourself (e.g. Cloudflare R2). SoundCloud private tracks: paste the full secret link and set engine to soundcloud.</p>
         <label>SoundCloud track id<input id="editScId" placeholder="numeric id (soundcloud engine)" /></label>
         <label>Artwork URL<input id="editArtwork" placeholder="image url; blank = default cover" /></label>
         <label>Source URL (original page)<input id="editSourceUrl" /></label>

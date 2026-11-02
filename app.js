@@ -318,7 +318,11 @@ async function playId(id, { autoplay = true } = {}) {
   if (activeEngine === 'soundcloud') {
     scInit();
     if (!scWidget) { pbTime.textContent = 'widget failed to load — try refresh'; return; }
-    const url = `https://api.soundcloud.com/tracks/${s.soundcloudTrackId}`;
+    // Allow private SoundCloud tracks: if a full soundcloud.com URL (with
+    // secret_token) was provided, load that directly instead of the public API URL.
+    const url = (s.audioUrl && /soundcloud\.com/i.test(s.audioUrl))
+      ? s.audioUrl
+      : `https://api.soundcloud.com/tracks/${s.soundcloudTrackId}`;
     scPos = 0; scDur = (s.durationSec || 0) * 1000;
     try { scWidget.load(url, { auto_play: autoplay, show_artwork: false, visual: false }); }
     catch { pbTime.textContent = 'widget failed to load — try refresh'; return; }
@@ -439,6 +443,10 @@ audio.addEventListener('pause', updatePlayBtn);
 audio.addEventListener('ended', () => {
   if (repeatMode === 2) { audio.currentTime = 0; audio.play().catch(() => {}); }
   else step(1);
+});
+audio.addEventListener('error', () => {
+  if (activeEngine !== 'audio') return;
+  showToast('Track unavailable — use a direct audio file URL (e.g. a .m4a), not a share-page link');
 });
 audio.addEventListener('timeupdate', () => {
   if (activeEngine !== 'audio' || isSeeking || !audio.duration) return;
