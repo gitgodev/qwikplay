@@ -106,7 +106,7 @@ for (const sc of scTracks) {
 }
 
 // --- Re-apply curation, default visible ---
-const all = [...keptSc, ...blTracks].map((t) => {
+const upstream = [...keptSc, ...blTracks].map((t) => {
   const old = prevById.get(t.id);
   // A manual audioUrl (e.g. you pointed a track at your own R2 file) survives
   // re-imports; anything on BandLab's CDN is refreshed from upstream.
@@ -118,6 +118,11 @@ const all = [...keptSc, ...blTracks].map((t) => {
     ...(manualAudio ? { audioUrl: manualAudio, engine: 'audio' } : {}),
   };
 });
+// Preserve manually added tracks (ids not present upstream) so daily sync
+// doesn't wipe admin-created entries. Their curation/URLs survive as-is.
+const upstreamIds = new Set(upstream.map((t) => t.id));
+const manual = prev.filter((s) => !upstreamIds.has(s.id));
+const all = [...upstream, ...manual];
 writeFileSync(SONGS_PATH, JSON.stringify(all, null, 2) + '\n');
 const hidden = all.filter((t) => t.visible === false).length;
 console.log(`\nwrote songs.json: ${all.length} entries (${keptSc.length} SC-only + ${blTracks.length} BandLab, ${merged} SC merged as alt links${hidden ? `, ${hidden} hidden by you` : ''})`);

@@ -36,6 +36,8 @@ site with `?admin=1` / `#admin=1`:
   list,
   queue, search and deep-links for everyone else (dimmed preview for you).
 - **⬇ Export songs.json** downloads the catalog with your choices baked in —
+  replace `songs.json` with it and commit to publish to everyone (including
+  manually added tracks; daily sync preserves them).
 - Private/unreleased tracks: use **✏ Edit → Audio URL** with a *direct* audio
   file URL (.m4a). BandLab share-page links are not playable; host the file
   (e.g. Cloudflare R2) or use a SoundCloud secret link with the soundcloud
