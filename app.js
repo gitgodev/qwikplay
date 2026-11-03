@@ -559,7 +559,9 @@ function seekBy(sec) {
 }
 
 function mergeAdminSongs(base) {
-  if (!ADMIN) return base;
+  // Apply the admin's working copy on this browser even when dev mode is off,
+  // so manually added/edited tracks survive refreshes. Visitors without this
+  // localStorage key just see the published songs.json.
   try {
     const saved = JSON.parse(localStorage.getItem('adminSongs') || 'null');
     const deleted = new Set(JSON.parse(localStorage.getItem('adminDeleted') || '[]'));
@@ -759,8 +761,7 @@ function setAdmin(on) {
   } else {
     try { localStorage.setItem('adminMode', ADMIN ? '1' : '0'); } catch {}
   }
-  if (ADMIN && baseSongs.length) SONGS = mergeAdminSongs(baseSongs);
-  else if (!ADMIN && baseSongs.length) SONGS = baseSongs;
+  if (baseSongs.length) SONGS = mergeAdminSongs(baseSongs);
   setupAdminUI();
   renderTracks();
   showToast(ADMIN ? 'Dev mode ON' : 'Dev mode OFF');
