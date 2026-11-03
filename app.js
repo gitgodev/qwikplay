@@ -44,7 +44,8 @@ function readAdminParam() {
   return null;
 }
 // When an admin password hash is configured (via env at deploy time), URL params
-// cannot bypass it; only a persisted, password-gated session counts.
+// and stale localStorage flags cannot bypass it. Admin state is kept in
+// sessionStorage only, so a password is required on a fresh browser/session.
 if (!ADMIN_HASH) {
   const _adminParam = readAdminParam();
   if (_adminParam !== null) {
@@ -54,7 +55,9 @@ if (!ADMIN_HASH) {
     try { ADMIN = localStorage.getItem('adminMode') === '1'; } catch { ADMIN = false; }
   }
 } else {
-  try { ADMIN = localStorage.getItem('adminMode') === '1'; } catch { ADMIN = false; }
+  // Drop any legacy persisted admin flag so it can't bypass the password.
+  try { localStorage.removeItem('adminMode'); } catch {}
+  try { ADMIN = sessionStorage.getItem('adminSession') === '1'; } catch { ADMIN = false; }
 }
 async function adminPasswordOk(pw) {
   if (!ADMIN_HASH || !pw) return false;
@@ -748,8 +751,16 @@ function setupAdminUI() {
 }
 function setAdmin(on) {
   ADMIN = !!on;
-  try { localStorage.setItem('adminMode', ADMIN ? '1' : '0'); } catch {}
+  if (ADMIN_HASH) {
+    try {
+      if (ADMIN) sessionStorage.setItem('adminSession', '1');
+      else sessionStorage.removeItem('adminSession');
+    } catch {}
+  } else {
+    try { localStorage.setItem('adminMode', ADMIN ? '1' : '0'); } catch {}
+  }
   if (ADMIN && baseSongs.length) SONGS = mergeAdminSongs(baseSongs);
+  else if (!ADMIN && baseSongs.length) SONGS = baseSongs;
   setupAdminUI();
   renderTracks();
   showToast(ADMIN ? 'Dev mode ON' : 'Dev mode OFF');
