@@ -71,6 +71,7 @@ function isHidden(s) { return localVis[s.id] ?? (s.visible === false); }
 function visibleSongs() { return SONGS.filter((s) => !isHidden(s)); }
 
 let SONGS = [];
+let baseSongs = [];
 let QUEUE = [];
 let currentId = null;
 let isSeeking = false;
@@ -252,6 +253,7 @@ function setVisible(id, show) {
   // Keep queue clean: hidden tracks leave the queue.
   if (!show) QUEUE = QUEUE.filter((x) => x !== id);
   save(); renderTracks(); renderQueue();
+  persistAdminSongs();
 }
 
 function renderQueue() {
@@ -391,11 +393,11 @@ trackListEl.addEventListener('click', (e) => {
   if (act === 'edit' && ADMIN) { const s = songById(id); if (s) openEdit(s); }
   if (act === 'moveUp' && ADMIN) {
     const idx = SONGS.findIndex((s) => s.id === id);
-    if (idx > 0) { [SONGS[idx - 1], SONGS[idx]] = [SONGS[idx], SONGS[idx - 1]]; renderTracks(); }
+    if (idx > 0) { [SONGS[idx - 1], SONGS[idx]] = [SONGS[idx], SONGS[idx - 1]]; renderTracks(); persistAdminSongs(); }
   }
   if (act === 'moveDown' && ADMIN) {
     const idx = SONGS.findIndex((s) => s.id === id);
-    if (idx < SONGS.length - 1) { [SONGS[idx + 1], SONGS[idx]] = [SONGS[idx], SONGS[idx + 1]]; renderTracks(); }
+    if (idx < SONGS.length - 1) { [SONGS[idx + 1], SONGS[idx]] = [SONGS[idx], SONGS[idx + 1]]; renderTracks(); persistAdminSongs(); }
   }
 });
 queueListEl.addEventListener('click', (e) => {
@@ -553,6 +555,36 @@ function seekBy(sec) {
   }
 }
 
+function mergeAdminSongs(base) {
+  if (!ADMIN) return base;
+  try {
+    const saved = JSON.parse(localStorage.getItem('adminSongs') || 'null');
+    const deleted = new Set(JSON.parse(localStorage.getItem('adminDeleted') || '[]'));
+    if (!Array.isArray(saved)) return base;
+    const byId = new Map(base.map((s) => [s.id, s]));
+    const savedById = new Map(saved.map((s) => [s.id, s]));
+    const merged = [];
+    for (const b of base) {
+      if (deleted.has(b.id)) continue;
+      const s = savedById.get(b.id);
+      merged.push(s ? { ...b, ...s } : b);
+    }
+    for (const s of saved) {
+      if (!byId.has(s.id) && !deleted.has(s.id)) merged.push(s);
+    }
+    return merged;
+  } catch { return base; }
+}
+function persistAdminSongs() {
+  if (!ADMIN) return;
+  try { localStorage.setItem('adminSongs', JSON.stringify(SONGS)); } catch {}
+}
+function markAdminDeleted(id) {
+  try {
+    const arr = JSON.parse(localStorage.getItem('adminDeleted') || '[]');
+    if (!arr.includes(id)) { arr.push(id); localStorage.setItem('adminDeleted', JSON.stringify(arr)); }
+  } catch {}
+}
 // --- admin edit modal ---
 function genId() { return 'tr-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 function openEdit(track) {
@@ -604,6 +636,7 @@ if (editForm) {
     try { localStorage.setItem('visOverrides', JSON.stringify(localVis)); } catch {}
     closeEdit();
     renderTracks();
+    persistAdminSongs();
     showToast('Track saved');
   });
 }
@@ -617,8 +650,10 @@ if (editDelete) editDelete.addEventListener('click', () => {
   SONGS = SONGS.filter((s) => s.id !== id);
   delete localVis[id];
   try { localStorage.setItem('visOverrides', JSON.stringify(localVis)); } catch {}
+  markAdminDeleted(id);
   QUEUE = QUEUE.filter((x) => x !== id);
   save(); closeEdit(); renderTracks(); renderQueue();
+  persistAdminSongs();
   showToast('Track deleted');
 });
 const editModal = $('#editModal');
@@ -628,7 +663,8 @@ if (editModal) editModal.addEventListener('click', (e) => { if (e.target === edi
 try {
   const res = await fetch('./songs.json', { cache: 'no-store' });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  SONGS = await res.json();
+  baseSongs = await res.json();
+  SONGS = mergeAdminSongs(baseSongs);
 } catch (err) {
   trackListEl.innerHTML = `<div class="empty" style="flex:1">
     <strong>Failed to load tracks.</strong><br><br>
@@ -713,6 +749,7 @@ function setupAdminUI() {
 function setAdmin(on) {
   ADMIN = !!on;
   try { localStorage.setItem('adminMode', ADMIN ? '1' : '0'); } catch {}
+  if (ADMIN && baseSongs.length) SONGS = mergeAdminSongs(baseSongs);
   setupAdminUI();
   renderTracks();
   showToast(ADMIN ? 'Dev mode ON' : 'Dev mode OFF');
