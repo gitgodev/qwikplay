@@ -52,7 +52,7 @@
     "source": "bandlab",
     "sourceUrl": "https://www.bandlab.com/realqwik/qsandps",
     "releaseDate": "2025-04-20",
-    "plays": 2380,
+    "plays": 2381,
     "altSourceUrl": "https://soundcloud.com/aaron2z/qs-n-ps",
     "altSource": "soundcloud",
     "visible": true
@@ -378,20 +378,6 @@
     "visible": true
   },
   {
-    "id": "bl-un-finished-481ecbd6",
-    "title": "Un-finished",
-    "artist": "qwik",
-    "engine": "audio",
-    "audioUrl": "https://static.bandlab.com/revisions-formatted/a567f234-f02f-47b2-99f6-bbe11b2bbf89/a567f234-f02f-47b2-99f6-bbe11b2bbf89.m4a",
-    "artwork": "https://bl-prod-images.azureedge.net/v1.3/songs/ca85f527-ca33-4c24-b780-e842a218270d/500x500",
-    "durationSec": 70,
-    "source": "bandlab",
-    "sourceUrl": "https://www.bandlab.com/realqwik/un-finished-481ecbd6",
-    "releaseDate": "2024-08-22",
-    "plays": 157,
-    "visible": false
-  },
-  {
     "id": "bl-untitled-aug-20-2026-407-pm-1e90fa06",
     "title": "Whole Lotta GLG Shit 1",
     "artist": "qwik",
@@ -462,6 +448,20 @@
     "visible": true
   },
   {
+    "id": "bl-forbidden",
+    "title": "Forbidden",
+    "artist": "qwik",
+    "engine": "audio",
+    "audioUrl": "https://static.bandlab.com/revisions-formatted/7897b4ee-189d-48e9-b69d-f8c5d74d0101/7897b4ee-189d-48e9-b69d-f8c5d74d0101.m4a",
+    "artwork": "https://bl-prod-images.azureedge.net/v1.3/songs/0e03bb1e-9b85-4da5-8ce0-83d389578b20/500x500",
+    "durationSec": 174,
+    "source": "bandlab",
+    "sourceUrl": "https://www.bandlab.com/realqwik/forbidden",
+    "releaseDate": "2026-11-05",
+    "plays": 31,
+    "visible": true
+  },
+  {
     "id": "bl-keep-it-n-motion-6b403e3e",
     "title": "👩🏽‍🦼💨keep it n motion👨🏽‍🦽💨",
     "artist": "qwik",
@@ -515,6 +515,20 @@
     "sourceUrl": "https://www.bandlab.com/realqwik/get-it-right-2c84cdc6",
     "releaseDate": "2026-09-24",
     "plays": 7,
+    "visible": false
+  },
+  {
+    "id": "bl-un-finished-481ecbd6",
+    "title": "Un-finished",
+    "artist": "qwik",
+    "engine": "audio",
+    "audioUrl": "https://static.bandlab.com/revisions-formatted/a567f234-f02f-47b2-99f6-bbe11b2bbf89/a567f234-f02f-47b2-99f6-bbe11b2bbf89.m4a",
+    "artwork": "https://bl-prod-images.azureedge.net/v1.3/songs/ca85f527-ca33-4c24-b780-e842a218270d/500x500",
+    "durationSec": 70,
+    "source": "bandlab",
+    "sourceUrl": "https://www.bandlab.com/realqwik/un-finished-481ecbd6",
+    "releaseDate": "2024-08-22",
+    "plays": 157,
     "visible": false
   },
   {
