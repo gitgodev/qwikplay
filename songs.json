@@ -52,7 +52,7 @@
     "source": "bandlab",
     "sourceUrl": "https://www.bandlab.com/realqwik/qsandps",
     "releaseDate": "2025-04-20",
-    "plays": 2381,
+    "plays": 2382,
     "altSourceUrl": "https://soundcloud.com/aaron2z/qs-n-ps",
     "altSource": "soundcloud",
     "visible": true
@@ -99,8 +99,6 @@
     "sourceUrl": "https://www.bandlab.com/realqwik/allegedly-3357e7d7",
     "releaseDate": "2024-08-22",
     "plays": 1266,
-    "altSourceUrl": "https://soundcloud.com/aaron2z/allegedly",
-    "altSource": "soundcloud",
     "visible": true
   },
   {
@@ -200,7 +198,7 @@
     "source": "bandlab",
     "sourceUrl": "https://www.bandlab.com/realqwik/foldin-c68bade7",
     "releaseDate": "2025-01-15",
-    "plays": 690,
+    "plays": 691,
     "altSourceUrl": "https://soundcloud.com/aaron2z/26bows",
     "altSource": "soundcloud",
     "visible": true
@@ -320,6 +318,20 @@
     "visible": true
   },
   {
+    "id": "bl-forbidden",
+    "title": "Forbidden",
+    "artist": "qwik",
+    "engine": "audio",
+    "audioUrl": "https://static.bandlab.com/revisions-formatted/7897b4ee-189d-48e9-b69d-f8c5d74d0101/7897b4ee-189d-48e9-b69d-f8c5d74d0101.m4a",
+    "artwork": "https://bl-prod-images.azureedge.net/v1.3/songs/0e03bb1e-9b85-4da5-8ce0-83d389578b20/500x500",
+    "durationSec": 174,
+    "source": "bandlab",
+    "sourceUrl": "https://www.bandlab.com/realqwik/forbidden",
+    "releaseDate": "2026-11-05",
+    "plays": 300,
+    "visible": true
+  },
+  {
     "id": "bl-enough-open-verse-0a438ac3-a5a961c",
     "title": "Enough (Open Verse)",
     "artist": "qwik",
@@ -344,7 +356,7 @@
     "source": "bandlab",
     "sourceUrl": "https://www.bandlab.com/realqwik/on-my-mind-43f618a3",
     "releaseDate": "2026-08-25",
-    "plays": 257,
+    "plays": 258,
     "altSourceUrl": "https://soundcloud.com/aaron2z/on-my-mind",
     "altSource": "soundcloud",
     "visible": true
@@ -445,20 +457,6 @@
     "sourceUrl": "https://www.bandlab.com/realqwik/cannot-relate-39ad7a39",
     "releaseDate": "2026-06-03",
     "plays": 40,
-    "visible": true
-  },
-  {
-    "id": "bl-forbidden",
-    "title": "Forbidden",
-    "artist": "qwik",
-    "engine": "audio",
-    "audioUrl": "https://static.bandlab.com/revisions-formatted/7897b4ee-189d-48e9-b69d-f8c5d74d0101/7897b4ee-189d-48e9-b69d-f8c5d74d0101.m4a",
-    "artwork": "https://bl-prod-images.azureedge.net/v1.3/songs/0e03bb1e-9b85-4da5-8ce0-83d389578b20/500x500",
-    "durationSec": 174,
-    "source": "bandlab",
-    "sourceUrl": "https://www.bandlab.com/realqwik/forbidden",
-    "releaseDate": "2026-11-05",
-    "plays": 31,
     "visible": true
   },
   {
