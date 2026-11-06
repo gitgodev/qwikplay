@@ -2,7 +2,9 @@ name: daily-sync
 
 on:
   schedule:
-    - cron: "0 9 * * *"
+    # Poll sources frequently so new releases show up without manual export.
+    # (GitHub may delay scheduled runs by a few minutes.)
+    - cron: "*/15 * * * *"
   workflow_dispatch:
 
 permissions:

@@ -11,6 +11,9 @@
   <meta name="theme-color" content="#0b0d12" />
   <link rel="icon" href="data:," />
   <link rel="manifest" href="./manifest.json" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Permanent+Marker&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="./styles.css" />
   <link rel="preconnect" href="https://static.bandlab.com" />
   <link rel="preconnect" href="https://bl-prod-images.azureedge.net" />
@@ -35,6 +38,13 @@
         <option value="soundcloud">SoundCloud</option>
         <option value="bandlab">BandLab</option>
       </select>
+      <select id="sortSelect" aria-label="Sort tracks">
+        <option value="manual">Sort: Default order</option>
+        <option value="plays">Sort: Most plays</option>
+        <option value="title">Sort: Title A–Z</option>
+      </select>
+      <button id="themeToggle" class="ghost" title="Toggle light/dark theme" aria-label="Toggle theme">🌙</button>
+      <button id="contactBtn" class="ghost" title="Contact" aria-label="Contact">✉ Contact</button>
     </div>
   </header>
 
@@ -43,6 +53,7 @@
     <button id="exportBtn">⬇ Export songs.json</button>
     <button id="addTrackBtn" class="ghost">+ Add track</button>
     <button id="defaultCoverBtn" class="ghost">Set default cover</button>
+    <button id="bannerBtn" class="ghost">Set banner image</button>
     <button id="bulkHideBtn" class="ghost">Hide selected</button>
     <button id="bulkShowBtn" class="ghost">Show selected</button>
     <span class="admin-hint">Hide/Show tracks, then Export and replace songs.json to make it live for everyone.</span>
@@ -123,6 +134,17 @@
     <iframe id="scFrame" title="SoundCloud player" src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/2409782406&amp;auto_play=false&amp;show_artwork=false&amp;visual=false" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none" allow="autoplay"></iframe>
   </footer>
 
+  <div id="contactModal" class="modal" hidden>
+    <div class="modal-card">
+      <h2>Contact</h2>
+      <p class="fineprint">Reach out via WhatsApp or email.</p>
+      <div class="modal-actions">
+        <a id="contactWa" class="play" href="#" target="_blank" rel="noopener" style="text-decoration:none;display:inline-flex;align-items:center">💬 WhatsApp</a>
+        <a id="contactEmail" class="ghost" href="#" style="text-decoration:none;display:inline-flex;align-items:center">✉ Email</a>
+        <button type="button" id="contactCancel" class="ghost">Close</button>
+      </div>
+    </div>
+  </div>
   <div id="toast" class="toast" hidden></div>
   <div id="editModal" class="modal" hidden>
     <div class="modal-card">

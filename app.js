@@ -156,6 +156,31 @@ function isBadArt(url) {
   return url.includes('fb_placeholder') || url.includes('placeholder') || url.includes('default');
 }
 function defaultArtwork() { try { return localStorage.getItem('defaultArtwork') || ''; } catch { return ''; } }
+function bannerImage() { try { return localStorage.getItem('bannerImage') || ''; } catch { return ''; } }
+function applyBanner() {
+  const disc = document.querySelector('.disc');
+  if (!disc) return;
+  const url = bannerImage();
+  if (url) {
+    disc.style.background = `url(${url}) center/cover no-repeat`;
+    disc.style.border = '2px solid var(--line)';
+  } else {
+    disc.style.background = '';
+    disc.style.border = '';
+  }
+}
+function currentTheme() { try { return localStorage.getItem('theme') || 'dark'; } catch { return 'dark'; } }
+function applyTheme() {
+  const t = currentTheme();
+  document.documentElement.setAttribute('data-theme', t === 'light' ? 'light' : 'dark');
+  const btn = $('#themeToggle');
+  if (btn) btn.textContent = t === 'light' ? '☀️' : '🌙';
+}
+function toggleTheme() {
+  const next = currentTheme() === 'light' ? 'dark' : 'light';
+  try { localStorage.setItem('theme', next); } catch {}
+  applyTheme();
+}
 function artFor(s, fallbackEmoji = '♪') {
   const art = (s?.artwork && !isBadArt(s.artwork)) ? s.artwork : (defaultArtwork() || '');
   if (art) {
@@ -200,10 +225,16 @@ function renderTracks() {
   const q = searchEl.value.trim().toLowerCase();
   const src = sourceFilterEl.value;
   const pool = ADMIN ? SONGS : visibleSongs();
-  const list = pool.filter((s) => {
+  const filtered = pool.filter((s) => {
     const okQ = !q || `${s.title} ${s.artist}`.toLowerCase().includes(q);
     const okS = src === 'all' || s.source === src;
     return okQ && okS;
+  });
+  const sortMode = (sortSelect && sortSelect.value) || 'manual';
+  const list = [...filtered].sort((a, b) => {
+    if (sortMode === 'plays') return (b.plays || 0) - (a.plays || 0);
+    if (sortMode === 'title') return String(a.title || '').localeCompare(String(b.title || ''));
+    return 0; // manual: keep stored order
   });
   const hiddenN = SONGS.length - visibleSongs().length;
   countEl.textContent = `${list.length} track${list.length === 1 ? '' : 's'}`;
@@ -477,6 +508,14 @@ else audio.volume = 0.9;
 let searchDebounce;
 searchEl.addEventListener('input', () => { clearTimeout(searchDebounce); searchDebounce = setTimeout(renderTracks, 150); });
 sourceFilterEl.addEventListener('change', renderTracks);
+const sortSelect = $('#sortSelect');
+if (sortSelect) {
+  try { sortSelect.value = localStorage.getItem('sortBy') || 'manual'; } catch {}
+  sortSelect.addEventListener('change', () => {
+    try { localStorage.setItem('sortBy', sortSelect.value); } catch {}
+    renderTracks();
+  });
+}
 $('#shuffleBtn').onclick = () => {
   for (let i = QUEUE.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -664,6 +703,29 @@ if (editDelete) editDelete.addEventListener('click', () => {
 const editModal = $('#editModal');
 if (editModal) editModal.addEventListener('click', (e) => { if (e.target === editModal) closeEdit(); });
 
+// --- contact modal (obfuscated details) ---
+const _wa = 'KzE1MDUzOTkyODIz';
+const _em = 'YmFyY29zeXNkZXZAZ21haWwuY29t';
+const contactBtn = $('#contactBtn');
+const contactModal = $('#contactModal');
+function openContact() {
+  if (!contactModal) return;
+  try {
+    const wa = atob(_wa).replace(/^\+/, '');
+    const em = atob(_em);
+    const waLink = $('#contactWa');
+    const emLink = $('#contactEmail');
+    if (waLink) waLink.href = `https://wa.me/${wa}`;
+    if (emLink) emLink.href = `mailto:${em}`;
+  } catch {}
+  contactModal.hidden = false;
+}
+function closeContact() { if (contactModal) contactModal.hidden = true; }
+if (contactBtn) contactBtn.addEventListener('click', openContact);
+if (contactModal) contactModal.addEventListener('click', (e) => { if (e.target === contactModal) closeContact(); });
+const contactCancel = $('#contactCancel');
+if (contactCancel) contactCancel.addEventListener('click', closeContact);
+
 // boot
 try {
   const res = await fetch('./songs.json', { cache: 'no-store' });
@@ -750,6 +812,17 @@ function setupAdminUI() {
       showToast(url.trim() ? 'Default cover set' : 'Default cover cleared');
     };
   }
+  const bannerBtn = $('#bannerBtn');
+  if (bannerBtn && !bannerBtn._wired) {
+    bannerBtn._wired = true;
+    bannerBtn.onclick = () => {
+      const url = window.prompt('Banner image URL (shown in the QWIK badge; blank to clear):', bannerImage());
+      if (url === null) return;
+      try { localStorage.setItem('bannerImage', url.trim()); } catch {}
+      applyBanner();
+      showToast(url.trim() ? 'Banner set' : 'Banner cleared');
+    };
+  }
 }
 function setAdmin(on) {
   ADMIN = !!on;
@@ -779,6 +852,10 @@ if (devToggle) {
   devToggle.addEventListener('contextmenu', (e) => { e.preventDefault(); setAdmin(false); });
 }
 setupAdminUI();
+applyBanner();
+applyTheme();
+const themeToggle = $('#themeToggle');
+if (themeToggle) themeToggle.addEventListener('click', toggleTheme);
 renderTracks(); renderQueue(); drawWave(0);
 if (currentId && songById(currentId)) playId(currentId, { autoplay: false });
 else if (visibleSongs()[0]) {

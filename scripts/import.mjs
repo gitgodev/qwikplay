@@ -5,6 +5,8 @@
 //   SoundCloud kept as alt link so plays still flow if listener clicks through)
 // - Preserves your curation: `visible:false` and manual `audioUrl` overrides in
 //   the existing songs.json survive re-imports (matched by id).
+// - Preserves manually added tracks (ids not present upstream).
+// - Combines play counts when a track exists on both platforms.
 // Run: node scripts/import.mjs
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 
@@ -16,17 +18,14 @@ const UA = { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Appl
 function slug(s) {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'track';
 }
-// Normalize for dupe detection: case/punct-insensitive, ignore leading 'qwik - ' / 'qwik'.
 function normTitle(t) {
   return t.toLowerCase().replace(/[^a-z0-9]+/g, '').replace(/^qwik/, '').replace(/qwik$/, '').replace(/^the/, '');
 }
 
-// --- keep prior curation ---
 let prev = [];
 try { if (existsSync(SONGS_PATH)) prev = JSON.parse(readFileSync(SONGS_PATH, 'utf8')); } catch {}
 const prevById = new Map(prev.map((s) => [s.id, s]));
 
-// --- SoundCloud ---
 console.log('Fetching SoundCloud profile…');
 const scHtml = await (await fetch(SC_PROFILE, { headers: UA })).text();
 const links = [...new Set(
@@ -37,13 +36,38 @@ console.log(`found ${links.length} SC tracks`);
 const scTracks = [];
 for (const path of links) {
   const url = `https://soundcloud.com${path}`;
+  const id = 'sc-' + slug(path.split('/').pop());
+  const old = prevById.get(id);
+  if (old) {
+    scTracks.push({
+      id,
+      title: old.title,
+      artist: old.artist || 'Qwik',
+      engine: 'soundcloud',
+      soundcloudTrackId: old.soundcloudTrackId || '',
+      audioUrl: old.audioUrl || '',
+      artwork: old.artwork || '',
+      durationSec: old.durationSec || 0,
+      source: 'soundcloud',
+      sourceUrl: url,
+      releaseDate: old.releaseDate || '',
+      plays: old.plays || 0,
+    });
+    continue;
+  }
   try {
     const r = await fetch(`https://soundcloud.com/oembed?format=json&url=${encodeURIComponent(url)}`, { headers: UA });
     if (!r.ok) { console.warn('  skip', url, r.status); continue; }
     const j = await r.json();
     const trackId = (j.html.match(/tracks%2F(\d+)/) || j.html.match(/tracks\/(\d+)/) || [])[1] || '';
+    let plays = 0;
+    try {
+      const page = await fetch(url, { headers: UA }).then((x) => x.text());
+      const m = page.match(/"playback_count":(\d+)/) || page.match(/"plays":(\d+)/);
+      if (m) plays = Number(m[1]) || 0;
+    } catch {}
     scTracks.push({
-      id: 'sc-' + slug(path.split('/').pop()),
+      id,
       title: j.title.replace(/\s+by\s+Qwik$/i, ''),
       artist: 'Qwik',
       engine: 'soundcloud',
@@ -54,11 +78,11 @@ for (const path of links) {
       source: 'soundcloud',
       sourceUrl: url,
       releaseDate: '',
+      plays,
     });
   } catch (e) { console.warn('  err', url, e.message); }
 }
 
-// --- BandLab ---
 console.log('Fetching BandLab posts…');
 const bl = await (await fetch(BL_POSTS, { headers: { ...UA, Accept: 'application/json' } })).json();
 const seen = new Map();
@@ -85,7 +109,6 @@ for (const p of bl.data || []) {
 const blTracks = [...seen.values()].sort((a, b) => (b.plays || 0) - (a.plays || 0));
 console.log(`found ${blTracks.length} BandLab songs`);
 
-// --- Dedupe: same song both places -> keep BandLab (direct audio), link SC as alt ---
 const blByNorm = new Map();
 for (const t of blTracks) {
   const k = normTitle(t.title);
@@ -100,16 +123,15 @@ for (const sc of scTracks) {
   if (blGroup?.length) {
     const top = [...blGroup].sort((a, b) => (b.plays || 0) - (a.plays || 0))[0];
     if (!top.altSourceUrl) { top.altSourceUrl = sc.sourceUrl; top.altSource = 'soundcloud'; }
+    // Combine play counts from both platforms.
+    top.plays = (top.plays || 0) + (sc.plays || 0);
     merged++;
     console.log(`  merge: "${sc.title}" -> BandLab entry (SC kept as alt link)`);
   } else keptSc.push(sc);
 }
 
-// --- Re-apply curation, default visible ---
 const upstream = [...keptSc, ...blTracks].map((t) => {
   const old = prevById.get(t.id);
-  // A manual audioUrl (e.g. you pointed a track at your own R2 file) survives
-  // re-imports; anything on BandLab's CDN is refreshed from upstream.
   const manualAudio = old?.audioUrl && !old.audioUrl.startsWith('https://static.bandlab.com')
     ? old.audioUrl : null;
   return {
@@ -118,8 +140,6 @@ const upstream = [...keptSc, ...blTracks].map((t) => {
     ...(manualAudio ? { audioUrl: manualAudio, engine: 'audio' } : {}),
   };
 });
-// Preserve manually added tracks (ids not present upstream) so daily sync
-// doesn't wipe admin-created entries. Their curation/URLs survive as-is.
 const upstreamIds = new Set(upstream.map((t) => t.id));
 const manual = prev.filter((s) => !upstreamIds.has(s.id));
 const all = [...upstream, ...manual];
