@@ -11,6 +11,7 @@
     "source": "soundcloud",
     "sourceUrl": "https://soundcloud.com/aaron2z/crashout",
     "releaseDate": "",
+    "plays": 0,
     "visible": true
   },
   {
@@ -25,6 +26,7 @@
     "source": "soundcloud",
     "sourceUrl": "https://soundcloud.com/aaron2z/hotboxflow",
     "releaseDate": "",
+    "plays": 0,
     "visible": true
   },
   {
@@ -39,6 +41,7 @@
     "source": "soundcloud",
     "sourceUrl": "https://soundcloud.com/aaron2z/falken",
     "releaseDate": "",
+    "plays": 0,
     "visible": true
   },
   {
@@ -52,7 +55,7 @@
     "source": "bandlab",
     "sourceUrl": "https://www.bandlab.com/realqwik/qsandps",
     "releaseDate": "2025-04-20",
-    "plays": 2382,
+    "plays": 5441,
     "altSourceUrl": "https://soundcloud.com/aaron2z/qs-n-ps",
     "altSource": "soundcloud",
     "visible": true
@@ -68,7 +71,7 @@
     "source": "bandlab",
     "sourceUrl": "https://www.bandlab.com/realqwik/this-that",
     "releaseDate": "2026-09-29",
-    "plays": 2184,
+    "plays": 7939,
     "altSourceUrl": "https://soundcloud.com/aaron2z/this-that",
     "altSource": "soundcloud",
     "visible": true
@@ -85,20 +88,6 @@
     "sourceUrl": "https://www.bandlab.com/realqwik/new-project-8e22e4de",
     "releaseDate": "2025-07-25",
     "plays": 1350,
-    "visible": true
-  },
-  {
-    "id": "bl-allegedly-3357e7d7",
-    "title": "ALLEGEDLY",
-    "artist": "qwik",
-    "engine": "audio",
-    "audioUrl": "https://static.bandlab.com/revisions-formatted/ec6f214a-edfa-40ce-b630-70585c25f2eb/ec6f214a-edfa-40ce-b630-70585c25f2eb.m4a",
-    "artwork": "https://bl-prod-images.azureedge.net/v1.3/songs/0fd70757-79d4-4c69-8a36-badcbd10f483/500x500",
-    "durationSec": 61,
-    "source": "bandlab",
-    "sourceUrl": "https://www.bandlab.com/realqwik/allegedly-3357e7d7",
-    "releaseDate": "2024-08-22",
-    "plays": 1266,
     "visible": true
   },
   {
@@ -182,7 +171,7 @@
     "source": "bandlab",
     "sourceUrl": "https://www.bandlab.com/realqwik/freestyle-type-beat-flow-loaded-ezmp3cc-mp3-7dfba5da",
     "releaseDate": "2026-06-19",
-    "plays": 751,
+    "plays": 2371,
     "altSourceUrl": "https://soundcloud.com/aaron2z/whenisenough",
     "altSource": "soundcloud",
     "visible": true
@@ -198,7 +187,7 @@
     "source": "bandlab",
     "sourceUrl": "https://www.bandlab.com/realqwik/foldin-c68bade7",
     "releaseDate": "2025-01-15",
-    "plays": 691,
+    "plays": 704,
     "altSourceUrl": "https://soundcloud.com/aaron2z/26bows",
     "altSource": "soundcloud",
     "visible": true
@@ -256,7 +245,7 @@
     "source": "bandlab",
     "sourceUrl": "https://www.bandlab.com/realqwik/new-project-28ac2a31",
     "releaseDate": "2025-03-23",
-    "plays": 517,
+    "plays": 518,
     "visible": true
   },
   {
@@ -288,6 +277,20 @@
     "visible": false
   },
   {
+    "id": "bl-forbidden",
+    "title": "Forbidden",
+    "artist": "qwik",
+    "engine": "audio",
+    "audioUrl": "https://static.bandlab.com/revisions-formatted/7897b4ee-189d-48e9-b69d-f8c5d74d0101/7897b4ee-189d-48e9-b69d-f8c5d74d0101.m4a",
+    "artwork": "https://bl-prod-images.azureedge.net/v1.3/songs/0e03bb1e-9b85-4da5-8ce0-83d389578b20/500x500",
+    "durationSec": 174,
+    "source": "bandlab",
+    "sourceUrl": "https://www.bandlab.com/realqwik/forbidden",
+    "releaseDate": "2026-11-05",
+    "plays": 423,
+    "visible": true
+  },
+  {
     "id": "bl-100",
     "title": "100 - CCALI ft qwik ",
     "artist": "qwik",
@@ -312,23 +315,9 @@
     "source": "bandlab",
     "sourceUrl": "https://www.bandlab.com/realqwik/you-go-whoosh-45656f58-c889af07",
     "releaseDate": "2026-07-20",
-    "plays": 338,
+    "plays": 519,
     "altSourceUrl": "https://soundcloud.com/aaron2z/whooshed",
     "altSource": "soundcloud",
-    "visible": true
-  },
-  {
-    "id": "bl-forbidden",
-    "title": "Forbidden",
-    "artist": "qwik",
-    "engine": "audio",
-    "audioUrl": "https://static.bandlab.com/revisions-formatted/7897b4ee-189d-48e9-b69d-f8c5d74d0101/7897b4ee-189d-48e9-b69d-f8c5d74d0101.m4a",
-    "artwork": "https://bl-prod-images.azureedge.net/v1.3/songs/0e03bb1e-9b85-4da5-8ce0-83d389578b20/500x500",
-    "durationSec": 174,
-    "source": "bandlab",
-    "sourceUrl": "https://www.bandlab.com/realqwik/forbidden",
-    "releaseDate": "2026-11-05",
-    "plays": 300,
     "visible": true
   },
   {
@@ -356,7 +345,7 @@
     "source": "bandlab",
     "sourceUrl": "https://www.bandlab.com/realqwik/on-my-mind-43f618a3",
     "releaseDate": "2026-08-25",
-    "plays": 258,
+    "plays": 2367,
     "altSourceUrl": "https://soundcloud.com/aaron2z/on-my-mind",
     "altSource": "soundcloud",
     "visible": true
@@ -498,7 +487,7 @@
     "source": "bandlab",
     "sourceUrl": "https://www.bandlab.com/realqwik/idk-name-renditions-just-kinda-wingin-it-haha-cbd9dc2e",
     "releaseDate": "2026-10-13",
-    "plays": 11,
+    "plays": 12,
     "visible": true
   },
   {
@@ -514,6 +503,20 @@
     "releaseDate": "2026-09-24",
     "plays": 7,
     "visible": false
+  },
+  {
+    "id": "bl-allegedly-3357e7d7",
+    "title": "ALLEGEDLY",
+    "artist": "qwik",
+    "engine": "audio",
+    "audioUrl": "https://static.bandlab.com/revisions-formatted/ec6f214a-edfa-40ce-b630-70585c25f2eb/ec6f214a-edfa-40ce-b630-70585c25f2eb.m4a",
+    "artwork": "https://bl-prod-images.azureedge.net/v1.3/songs/0fd70757-79d4-4c69-8a36-badcbd10f483/500x500",
+    "durationSec": 61,
+    "source": "bandlab",
+    "sourceUrl": "https://www.bandlab.com/realqwik/allegedly-3357e7d7",
+    "releaseDate": "2024-08-22",
+    "plays": 1266,
+    "visible": true
   },
   {
     "id": "bl-un-finished-481ecbd6",
