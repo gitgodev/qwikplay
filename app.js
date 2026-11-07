@@ -30,6 +30,14 @@ const toast = $('#toast');
 // Private admin (dev) mode: curate tracks. Activated via ?admin=1 / #admin=1,
 // a discreet corner toggle, or a persisted choice — so it keeps working on
 // hosts (like GitHub Pages) where query strings can be dropped/normalized.
+// Load config.js with no-store to bypass CDN cache (env-injected values).
+try {
+  const _cfgRes = await fetch('./config.js', { cache: 'no-store' });
+  if (_cfgRes.ok) {
+    const _cfgText = await _cfgRes.text();
+    (0, eval)(_cfgText);
+  }
+} catch {}
 const ADMIN_HASH = (typeof window !== 'undefined' && window.QWIK_ADMIN_HASH ? String(window.QWIK_ADMIN_HASH).trim() : '');
 const PLAYS_OFFSET = (typeof window !== 'undefined' && window.QWIK_PLAYS_OFFSET) ? Number(window.QWIK_PLAYS_OFFSET) || 0 : 0;
 let ADMIN = false;
