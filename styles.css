@@ -87,6 +87,18 @@ input[type="search"] { width: min(280px, 40vw); }
   gap: 16px;
   padding: 4px 0 18px;
 }
+.track-list.list-view {
+  grid-template-columns: 1fr;
+}
+.track-list.list-view .track {
+  flex-direction: row;
+  align-items: center;
+  gap: 14px;
+}
+.track-list.list-view .track .art {
+  width: 64px; height: 64px; flex: 0 0 64px;
+}
+.track-list.list-view .track .art img { width: 64px; height: 64px; }
 .track {
   position: relative;
   width: 100%;

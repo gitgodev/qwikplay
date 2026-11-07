@@ -181,6 +181,25 @@ function toggleTheme() {
   try { localStorage.setItem('theme', next); } catch {}
   applyTheme();
 }
+function currentView() { try { return localStorage.getItem('viewMode') || 'grid'; } catch { return 'grid'; } }
+function applyView() {
+  const v = currentView();
+  const tl = $('#trackList');
+  if (tl) tl.classList.toggle('list-view', v === 'list');
+  const btn = $('#viewToggle');
+  if (btn) btn.textContent = v === 'list' ? '⊞ Grid' : '☰ List';
+}
+function updateTotalPlays() {
+  const el = $('#totalPlays');
+  if (!el) return;
+  const total = SONGS.reduce((a, s) => a + (Number(s.plays) || 0), 0);
+  el.textContent = `Total plays: ${total.toLocaleString()}`;
+}
+function toggleView() {
+  const next = currentView() === 'list' ? 'grid' : 'list';
+  try { localStorage.setItem('viewMode', next); } catch {}
+  applyView();
+}
 function artFor(s, fallbackEmoji = '♪') {
   const art = (s?.artwork && !isBadArt(s.artwork)) ? s.artwork : (defaultArtwork() || '');
   if (art) {
@@ -273,6 +292,7 @@ function renderTracks() {
   }
   const clearBtn = $('#clearSearch');
   if (clearBtn) clearBtn.onclick = () => { searchEl.value = ''; sourceFilterEl.value = 'all'; renderTracks(); };
+  updateTotalPlays();
 }
 
 function setVisible(id, show) {
@@ -510,7 +530,7 @@ searchEl.addEventListener('input', () => { clearTimeout(searchDebounce); searchD
 sourceFilterEl.addEventListener('change', renderTracks);
 const sortSelect = $('#sortSelect');
 if (sortSelect) {
-  try { sortSelect.value = localStorage.getItem('sortBy') || 'manual'; } catch {}
+  try { sortSelect.value = localStorage.getItem('sortBy') || 'plays'; } catch {}
   sortSelect.addEventListener('change', () => {
     try { localStorage.setItem('sortBy', sortSelect.value); } catch {}
     renderTracks();
@@ -891,8 +911,11 @@ if (devToggle) {
 setupAdminUI();
 applyBanner();
 applyTheme();
+applyView();
 const themeToggle = $('#themeToggle');
 if (themeToggle) themeToggle.addEventListener('click', toggleTheme);
+const viewToggle = $('#viewToggle');
+if (viewToggle) viewToggle.addEventListener('click', toggleView);
 renderTracks(); renderQueue(); drawWave(0);
 if (currentId && songById(currentId)) playId(currentId, { autoplay: false });
 else if (visibleSongs()[0]) {
