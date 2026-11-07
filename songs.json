@@ -55,7 +55,7 @@
     "source": "bandlab",
     "sourceUrl": "https://www.bandlab.com/realqwik/qsandps",
     "releaseDate": "2025-04-20",
-    "plays": 5444,
+    "plays": 5446,
     "altSourceUrl": "https://soundcloud.com/aaron2z/qs-n-ps",
     "altSource": "soundcloud",
     "visible": true
@@ -71,7 +71,7 @@
     "source": "bandlab",
     "sourceUrl": "https://www.bandlab.com/realqwik/this-that",
     "releaseDate": "2026-09-29",
-    "plays": 8035,
+    "plays": 8045,
     "altSourceUrl": "https://soundcloud.com/aaron2z/this-that",
     "altSource": "soundcloud",
     "visible": true
@@ -207,6 +207,20 @@
     "visible": true
   },
   {
+    "id": "bl-forbidden",
+    "title": "Forbidden",
+    "artist": "qwik",
+    "engine": "audio",
+    "audioUrl": "https://static.bandlab.com/revisions-formatted/7897b4ee-189d-48e9-b69d-f8c5d74d0101/7897b4ee-189d-48e9-b69d-f8c5d74d0101.m4a",
+    "artwork": "https://bl-prod-images.azureedge.net/v1.3/songs/0e03bb1e-9b85-4da5-8ce0-83d389578b20/500x500",
+    "durationSec": 174,
+    "source": "bandlab",
+    "sourceUrl": "https://www.bandlab.com/realqwik/forbidden",
+    "releaseDate": "2026-11-05",
+    "plays": 633,
+    "visible": true
+  },
+  {
     "id": "bl-untitled-mar-5-2025-219-am-bd0a3d81",
     "title": "Retrospect",
     "artist": "qwik",
@@ -235,20 +249,6 @@
     "visible": true
   },
   {
-    "id": "bl-forbidden",
-    "title": "Forbidden",
-    "artist": "qwik",
-    "engine": "audio",
-    "audioUrl": "https://static.bandlab.com/revisions-formatted/7897b4ee-189d-48e9-b69d-f8c5d74d0101/7897b4ee-189d-48e9-b69d-f8c5d74d0101.m4a",
-    "artwork": "https://bl-prod-images.azureedge.net/v1.3/songs/0e03bb1e-9b85-4da5-8ce0-83d389578b20/500x500",
-    "durationSec": 174,
-    "source": "bandlab",
-    "sourceUrl": "https://www.bandlab.com/realqwik/forbidden",
-    "releaseDate": "2026-11-05",
-    "plays": 562,
-    "visible": true
-  },
-  {
     "id": "bl-new-project-28ac2a31",
     "title": "Out All Night ",
     "artist": "qwik",
@@ -259,7 +259,7 @@
     "source": "bandlab",
     "sourceUrl": "https://www.bandlab.com/realqwik/new-project-28ac2a31",
     "releaseDate": "2025-03-23",
-    "plays": 518,
+    "plays": 519,
     "visible": true
   },
   {
