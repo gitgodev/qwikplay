@@ -13,7 +13,7 @@ import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 const SONGS_PATH = new URL('../songs.json', import.meta.url);
 const SC_PROFILE = 'https://soundcloud.com/aaron2z/tracks';
 const BL_POSTS = 'https://www.bandlab.com/api/v1.3/users/realqwik/posts?count=50';
-const UA = { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36' };
+const UA = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' };
 
 function slug(s) {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 60) || 'track';
@@ -39,6 +39,15 @@ for (const path of links) {
   const id = 'sc-' + slug(path.split('/').pop());
   const old = prevById.get(id);
   if (old) {
+    let plays = old.plays || 0;
+    // Re-scrape play count if we never captured it.
+    if (!plays) {
+      try {
+        const page = await fetch(url, { headers: UA }).then((x) => x.text());
+        const m = page.match(/"playback_count":(\d+)/) || page.match(/"plays":(\d+)/);
+        if (m) plays = Number(m[1]) || 0;
+      } catch {}
+    }
     scTracks.push({
       id,
       title: old.title,
@@ -51,7 +60,7 @@ for (const path of links) {
       source: 'soundcloud',
       sourceUrl: url,
       releaseDate: old.releaseDate || '',
-      plays: old.plays || 0,
+      plays,
     });
     continue;
   }
