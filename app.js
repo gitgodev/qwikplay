@@ -611,7 +611,26 @@ function mergeAdminSongs(base) {
     for (const b of base) {
       if (deleted.has(b.id)) continue;
       const s = savedById.get(b.id);
-      merged.push(s ? { ...b, ...s } : b);
+      if (!s) { merged.push(b); continue; }
+      // Apply admin curation on top of fresh upstream data, but keep upstream-
+      // refreshed fields (plays, audioUrl on BandLab CDN, artwork, duration)
+      // from the published base so sync updates are not clobbered by stale
+      // working-copy values.
+      const m = { ...b };
+      if (s.visible !== undefined) m.visible = s.visible;
+      if (s.order !== undefined) m.order = s.order;
+      // Manual audioUrl override (e.g. pointed at own R2 file) survives.
+      if (s.audioUrl && s.audioUrl !== b.audioUrl && !s.audioUrl.startsWith('https://static.bandlab.com')) {
+        m.audioUrl = s.audioUrl;
+        if (s.engine) m.engine = s.engine;
+      }
+      // Manual artwork override survives.
+      if (s.artwork && s.artwork !== b.artwork && !isBadArt(s.artwork)) {
+        m.artwork = s.artwork;
+      }
+      // Plays always come from the fresh base (sync keeps them current).
+      m.plays = b.plays;
+      merged.push(m);
     }
     for (const s of saved) {
       if (!byId.has(s.id) && !deleted.has(s.id)) merged.push(s);
