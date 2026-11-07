@@ -31,6 +31,7 @@ const toast = $('#toast');
 // a discreet corner toggle, or a persisted choice — so it keeps working on
 // hosts (like GitHub Pages) where query strings can be dropped/normalized.
 const ADMIN_HASH = (typeof window !== 'undefined' && window.QWIK_ADMIN_HASH ? String(window.QWIK_ADMIN_HASH).trim() : '');
+const PLAYS_OFFSET = (typeof window !== 'undefined' && window.QWIK_PLAYS_OFFSET) ? Number(window.QWIK_PLAYS_OFFSET) || 0 : 0;
 let ADMIN = false;
 function readAdminParam() {
   try {
@@ -200,7 +201,8 @@ function updateTotalPlays() {
   if (!el) return;
   const platformTotal = SONGS.reduce((a, s) => a + (Number(s.plays) || 0), 0);
   const localTotal = Object.values(playCounts || {}).reduce((a, n) => a + (Number(n) || 0), 0);
-  const total = platformTotal + localTotal;
+  const offset = PLAYS_OFFSET || Number(localStorage.getItem('playsOffset') || 0) || 0;
+  const total = platformTotal + localTotal + offset;
   el.textContent = `Total plays: ${total.toLocaleString()}`;
 }
 function toggleView() {
@@ -257,11 +259,16 @@ function renderTracks() {
     const okS = src === 'all' || s.source === src;
     return okQ && okS;
   });
-  const sortMode = (sortSelect && sortSelect.value) || 'manual';
+  const sortMode = currentSort();
   const list = [...filtered].sort((a, b) => {
     if (sortMode === 'plays') return (b.plays || 0) - (a.plays || 0);
-    if (sortMode === 'title') return String(a.title || '').localeCompare(String(b.title || ''));
-    return 0; // manual: keep stored order
+    // newest: by releaseDate desc, then by order desc
+    const ra = a.releaseDate || '';
+    const rb = b.releaseDate || '';
+    if (ra && rb && ra !== rb) return rb.localeCompare(ra);
+    if (ra && !rb) return -1;
+    if (!ra && rb) return 1;
+    return (b.order || 0) - (a.order || 0);
   });
   const hiddenN = SONGS.length - visibleSongs().length;
   countEl.textContent = `${list.length} track${list.length === 1 ? '' : 's'}`;
@@ -564,13 +571,22 @@ else audio.volume = 0.9;
 let searchDebounce;
 searchEl.addEventListener('input', () => { clearTimeout(searchDebounce); searchDebounce = setTimeout(renderTracks, 150); });
 sourceFilterEl.addEventListener('change', renderTracks);
-const sortSelect = $('#sortSelect');
-if (sortSelect) {
-  try { sortSelect.value = localStorage.getItem('sortBy') || 'plays'; } catch {}
-  sortSelect.addEventListener('change', () => {
-    try { localStorage.setItem('sortBy', sortSelect.value); } catch {}
-    renderTracks();
-  });
+const sortToggle = $('#sortToggle');
+function currentSort() { try { return localStorage.getItem('sortBy') || 'newest'; } catch { return 'newest'; } }
+function applySort() {
+  const s = currentSort();
+  const btn = $('#sortToggle');
+  if (btn) btn.textContent = s === 'plays' ? 'Sort: Most plays' : 'Sort: Newest';
+}
+function toggleSort() {
+  const next = currentSort() === 'plays' ? 'newest' : 'plays';
+  try { localStorage.setItem('sortBy', next); } catch {}
+  applySort();
+  renderTracks();
+}
+if (sortToggle) {
+  applySort();
+  sortToggle.addEventListener('click', toggleSort);
 }
 $('#shuffleBtn').onclick = () => {
   for (let i = QUEUE.length - 1; i > 0; i--) {
@@ -803,19 +819,20 @@ const editModal = $('#editModal');
 if (editModal) editModal.addEventListener('click', (e) => { if (e.target === editModal) closeEdit(); });
 
 // --- contact modal (obfuscated details) ---
-const _wa = 'KzE1MDUzOTkyODIz';
-const _em = 'YmFyY29zeXNkZXZAZ21haWwuY29t';
+// Obfuscated (char-code arrays) so the details aren't plainly visible in HTML/JS.
+const _wa = [43,49,53,48,53,51,57,57,50,56,50,51];
+const _em = [98,97,114,99,111,115,121,115,100,101,118,64,103,109,97,105,108,46,99,111,109];
 const contactBtn = $('#contactBtn');
 const contactModal = $('#contactModal');
 function openContact() {
   if (!contactModal) return;
   try {
-    const wa = atob(_wa).replace(/^\+/, '');
-    const em = atob(_em);
+    const wa = String.fromCharCode(..._wa).replace(/^\+/, '');
+    const em = String.fromCharCode(..._em);
     const waLink = $('#contactWa');
     const emLink = $('#contactEmail');
-    if (waLink) waLink.href = `https://wa.me/${wa}`;
-    if (emLink) emLink.href = `mailto:${em}`;
+    if (waLink) { waLink.href = `https://wa.me/${wa}`; waLink.textContent = '💬 WhatsApp'; }
+    if (emLink) { emLink.href = `mailto:${em}`; emLink.textContent = '✉ Email'; }
   } catch {}
   contactModal.hidden = false;
 }
@@ -920,6 +937,19 @@ function setupAdminUI() {
       try { localStorage.setItem('bannerImage', url.trim()); } catch {}
       applyBanner();
       showToast(url.trim() ? 'Banner set' : 'Banner cleared');
+    };
+  }
+  const playsOffsetBtn = $('#playsOffsetBtn');
+  if (playsOffsetBtn && !playsOffsetBtn._wired) {
+    playsOffsetBtn._wired = true;
+    playsOffsetBtn.onclick = () => {
+      const cur = Number(localStorage.getItem('playsOffset') || PLAYS_OFFSET || 0);
+      const v = window.prompt('Plays offset to add to the total (site-wide via PLAYS_OFFSET env var):', String(cur));
+      if (v === null) return;
+      const n = Number(v) || 0;
+      try { localStorage.setItem('playsOffset', String(n)); } catch {}
+      updateTotalPlays();
+      showToast(`Plays offset set to ${n.toLocaleString()} (local preview; set PLAYS_OFFSET env var to publish)`);
     };
   }
 }

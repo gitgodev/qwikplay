@@ -39,11 +39,7 @@
         <option value="bandlab">BandLab</option>
         <option value="rapfame">Rap Fame</option>
       </select>
-      <select id="sortSelect" aria-label="Sort tracks">
-        <option value="manual">Sort: Default order</option>
-        <option value="plays">Sort: Most plays</option>
-        <option value="title">Sort: Title A–Z</option>
-      </select>
+      <button id="sortToggle" class="ghost" title="Toggle sort order" aria-label="Toggle sort">Sort: Newest</button>
       <button id="themeToggle" class="ghost" title="Toggle light/dark theme" aria-label="Toggle theme">🌙</button>
       <button id="viewToggle" class="ghost" title="Toggle list/grid view" aria-label="Toggle view">☰ List</button>
       <button id="contactBtn" class="ghost" title="Contact" aria-label="Contact">✉ Contact</button>
@@ -56,6 +52,7 @@
     <button id="addTrackBtn" class="ghost">+ Add track</button>
     <button id="defaultCoverBtn" class="ghost">Set default cover</button>
     <button id="bannerBtn" class="ghost">Set banner image</button>
+    <button id="playsOffsetBtn" class="ghost">Set plays offset</button>
     <button id="bulkHideBtn" class="ghost">Hide selected</button>
     <button id="bulkShowBtn" class="ghost">Show selected</button>
     <span class="admin-hint">Hide/Show tracks, then Export and replace songs.json to make it live for everyone.</span>

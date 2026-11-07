@@ -343,3 +343,5 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 .modal-card .checkrow { flex-direction: row; align-items: center; gap: 8px; color: var(--text); }
 .modal-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
 button.danger { border-color: rgba(255,120,120,.5); color: #ffb4b4; }
+#contactWa { background: #25d366; color: #fff; border-color: #25d366; }
+#contactWa:hover { filter: brightness(1.05); }

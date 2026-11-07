@@ -19,9 +19,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Generate config.js from ADMIN_PASSWORD secret
+      - name: Generate config.js from secrets
         env:
           ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+          PLAYS_OFFSET: ${{ secrets.PLAYS_OFFSET }}
         run: node scripts/gen-config.mjs
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
