@@ -628,8 +628,17 @@ function mergeAdminSongs(base) {
       if (s.artwork && s.artwork !== b.artwork && !isBadArt(s.artwork)) {
         m.artwork = s.artwork;
       }
-      // Plays always come from the fresh base (sync keeps them current).
-      m.plays = b.plays;
+      // Manual Rap Fame play count survives.
+      if (s.rapfamePlays) m.rapfamePlays = s.rapfamePlays;
+      // Plays come from the fresh base (sync keeps them current). A manually
+      // entered Rap Fame count is added only when no scraped match exists.
+      m.plays = b.plays || 0;
+      const baseRf = b.rapfamePlays || 0;
+      const baseScraped = b.rapfameScraped || false;
+      const savedRf = s.rapfamePlays || 0;
+      if (!baseScraped && !baseRf && savedRf) m.plays = (m.plays || 0) + savedRf;
+      m.rapfamePlays = baseRf || savedRf || 0;
+      m.rapfameScraped = baseScraped;
       merged.push(m);
     }
     for (const s of saved) {
@@ -664,6 +673,7 @@ function openEdit(track) {
   $('#editSourceUrl').value = track?.sourceUrl || '';
   $('#editAltSourceUrl').value = track?.altSourceUrl || '';
   $('#editDuration').value = track?.durationSec || '';
+  $('#editRfPlays').value = track?.rapfamePlays || '';
   $('#editVisible').checked = track ? (track.visible !== false && !isHidden(track)) : true;
   $('#editDelete').style.display = track ? '' : 'none';
   modal.hidden = false;
@@ -689,9 +699,17 @@ if (editForm) {
       altSourceUrl: altUrl,
       altSource: altUrl ? 'soundcloud' : undefined,
       durationSec: Number($('#editDuration').value) || 0,
+      rapfamePlays: Number($('#editRfPlays').value) || 0,
       source: engine === 'soundcloud' ? 'soundcloud' : 'bandlab',
       visible: $('#editVisible').checked,
     };
+    const existing = SONGS.find((s) => s.id === id);
+    const existingRf = existing?.rapfamePlays || 0;
+    const existingScraped = existing?.rapfameScraped || false;
+    const existingPlays = existing?.plays || 0;
+    const basePlays = existingScraped ? existingPlays : existingPlays - existingRf;
+    data.plays = basePlays + (data.rapfamePlays || 0);
+    data.rapfameScraped = existingScraped;
     const idx = SONGS.findIndex((s) => s.id === id);
     if (idx >= 0) SONGS[idx] = { ...SONGS[idx], ...data };
     else SONGS.push(data);

@@ -195,8 +195,19 @@ const upstream = [...keptSc, ...blTracks, ...rfNew].map((t) => {
   const old = prevById.get(t.id);
   const manualAudio = old?.audioUrl && !old.audioUrl.startsWith('https://static.bandlab.com')
     ? old.audioUrl : null;
+  const rfMatch = rfByNorm.get(normTitle(t.title));
+  const manualRf = old?.rapfamePlays || t.rapfamePlays || 0;
+  const storedRf = rfMatch?.plays ? (rfMatch.plays || 0) : (manualRf || 0);
+  const scraped = !!rfMatch;
+  let finalPlays = t.plays || 0;
+  if (!scraped && manualRf && t.source !== 'rapfame') {
+    finalPlays = (t.plays || 0) + manualRf;
+  }
   return {
     ...t,
+    plays: finalPlays,
+    rapfamePlays: storedRf,
+    rapfameScraped: scraped,
     visible: old?.visible ?? true,
     ...(manualAudio ? { audioUrl: manualAudio, engine: 'audio' } : {}),
   };
