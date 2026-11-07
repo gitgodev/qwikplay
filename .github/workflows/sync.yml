@@ -2,13 +2,17 @@ name: daily-sync
 
 on:
   schedule:
-    # Poll sources frequently so new releases show up without manual export.
-    # (GitHub may delay scheduled runs by a few minutes.)
     - cron: "*/15 * * * *"
   workflow_dispatch:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
 
 jobs:
   sync:
@@ -18,10 +22,29 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      # No npm install needed: import.mjs uses only Node fetch + fs.
       - run: node scripts/import.mjs
+      - name: detect changes
+        id: diff
+        run: |
+          if git diff --quiet songs.json; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
       - name: commit if changed
+        if: steps.diff.outputs.changed == 'true'
         run: |
           git config user.name "sync-bot"
           git config user.email "sync-bot@users.noreply.github.com"
-          git diff --quiet songs.json || (git add songs.json && git commit -m "chore: daily catalog sync" && git push)
+          git add songs.json
+          git commit -m "chore: daily catalog sync"
+          git push
+      - name: configure pages
+        uses: actions/configure-pages@v5
+      - name: upload pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+      - name: deploy to pages
+        id: deployment
+        uses: actions/deploy-pages@v4
