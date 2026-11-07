@@ -32,7 +32,7 @@ const toast = $('#toast');
 // hosts (like GitHub Pages) where query strings can be dropped/normalized.
 // Load config.js with no-store to bypass CDN cache (env-injected values).
 try {
-  const _cfgRes = await fetch('./config.js', { cache: 'no-store' });
+  const _cfgRes = await fetch('./config.js?v=' + Date.now(), { cache: 'no-store' });
   if (_cfgRes.ok) {
     const _cfgText = await _cfgRes.text();
     (0, eval)(_cfgText);
