@@ -146,6 +146,7 @@ try {
         engine: 'audio',
         audioUrl: t.url || '',
         artwork: t.imgUrl || '',
+        video: t.video === true,
         durationSec: Math.round(t.lengthSec || 0),
         source: 'rapfame',
         sourceUrl: t.shareUrl || `https://rapfame.app/tracks/${t.trackId}`,
@@ -222,6 +223,7 @@ const upstream = [...keptSc, ...blTracks, ...rfNew].map((t) => {
     plays: finalPlays,
     rapfamePlays: storedRf,
     rapfameScraped: scraped || t.source === 'rapfame',
+    video: old?.video ?? t.video ?? false,
     visible: old?.visible ?? true,
     ...(manualAudio ? { audioUrl: manualAudio, engine: 'audio' } : {}),
   };

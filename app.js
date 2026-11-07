@@ -5,6 +5,7 @@
 
 const $ = (s) => document.querySelector(s);
 const audio = $('#audio');
+const video = $('#video');
 const scFrame = $('#scFrame');
 const trackListEl = $('#trackList');
 const queueListEl = $('#queueList');
@@ -79,6 +80,7 @@ let QUEUE = [];
 let currentId = null;
 let isSeeking = false;
 let activeEngine = 'audio'; // 'audio' | 'soundcloud'
+let useVideo = false;
 let repeatMode = 0; // 0=off, 1=all, 2=one
 let playCounts = {};
 try { playCounts = JSON.parse(localStorage.getItem('playCounts') || '{}'); } catch { playCounts = {}; }
@@ -144,13 +146,17 @@ function fmt(s) {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
 }
 function songById(id) { return SONGS.find((s) => s.id === id); }
-function isPlaying() { return activeEngine === 'soundcloud' ? scPlaying : !audio.paused; }
+function isPlaying() { return activeEngine === 'soundcloud' ? scPlaying : useVideo ? !video.paused : !audio.paused; }
 // Default cover: gradient disc + first letter, used when a CDN image fails or is a placeholder.
 window.__artFallback = (t) => {
   const ch = ((t || '?').trim().charAt(0) || '?').toUpperCase();
   const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='500' height='500'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='#7df0c6'/><stop offset='1' stop-color='#8ab4ff'/></linearGradient></defs><rect width='500' height='500' fill='#141821'/><circle cx='250' cy='215' r='105' fill='url(#g)' opacity='0.9'/><text x='250' y='253' font-size='110' text-anchor='middle' fill='#0b0d12' font-family='sans-serif' font-weight='bold'>${ch.replace(/[<>&]/g, '')}</text></svg>`;
   return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
 };
+function isVideoUrl(url) {
+  if (!url) return false;
+  return /\.(mp4|webm|ogg|mov)(\?|$)/i.test(url);
+}
 function isBadArt(url) {
   if (!url) return true;
   return url.includes('fb_placeholder') || url.includes('placeholder') || url.includes('default');
@@ -192,7 +198,9 @@ function applyView() {
 function updateTotalPlays() {
   const el = $('#totalPlays');
   if (!el) return;
-  const total = SONGS.reduce((a, s) => a + (Number(s.plays) || 0), 0);
+  const platformTotal = SONGS.reduce((a, s) => a + (Number(s.plays) || 0), 0);
+  const localTotal = Object.values(playCounts || {}).reduce((a, n) => a + (Number(n) || 0), 0);
+  const total = platformTotal + localTotal;
   el.textContent = `Total plays: ${total.toLocaleString()}`;
 }
 function toggleView() {
@@ -271,7 +279,7 @@ function renderTracks() {
       </div>` : '';
     return `
     <div class="track ${isCurrent ? 'active' : ''} ${hidden ? 'is-hidden' : ''}" data-id="${s.id}">
-      <div class="art">${artFor(s)}</div>
+      <div class="art" ${hidden ? '' : 'data-act="play" style="cursor:pointer" title="Play"'}>${artFor(s)}</div>
       <div>
         <div class="t">${escapeHtml(s.title)}<span class="badge">${escapeHtml(s.source)}</span>${hidden ? '<span class="badge hidden-badge">hidden</span>' : ''}</div>
         <div class="a">${escapeHtml(s.artist || '')}${s.durationSec ? ` · ${fmt(s.durationSec)}` : ''}${s.plays ? ` · ${s.plays} plays` : ''}</div>
@@ -337,6 +345,7 @@ function escapeHtml(s) {
 
 function stopAll() {
   try { audio.pause(); } catch {}
+  try { video.pause(); } catch {}
   try { scWidget?.pause(); } catch {}
   scPlaying = false;
   clearInterval(scTimer);
@@ -384,9 +393,20 @@ async function playId(id, { autoplay = true } = {}) {
     catch { pbTime.textContent = 'widget failed to load — try refresh'; return; }
     if (autoplay) scPollStart();
   } else {
-    audio.src = s.audioUrl;
-    audio.preload = 'none';
-    if (autoplay) { try { await audio.play(); } catch {} }
+    useVideo = s.video === true;
+    if (useVideo) {
+      video.src = s.audioUrl;
+      video.style.display = '';
+      wave.style.display = 'none';
+      if (autoplay) { try { await video.play(); } catch {} }
+    } else {
+      video.pause();
+      video.style.display = 'none';
+      wave.style.display = '';
+      audio.src = s.audioUrl;
+      audio.preload = 'none';
+      if (autoplay) { try { await audio.play(); } catch {} }
+    }
   }
   updatePlayBtn();
 }
@@ -402,7 +422,8 @@ function togglePlay() {
     if (!scWidget) return;
     if (scPlaying) scWidget.pause(); else { scWidget.play(); scPollStart(); }
   } else {
-    if (audio.paused) audio.play().catch(() => {}); else audio.pause();
+    if (useVideo) { if (video.paused) video.play().catch(() => {}); else video.pause(); }
+    else { if (audio.paused) audio.play().catch(() => {}); else audio.pause(); }
   }
 }
 
@@ -438,7 +459,8 @@ trackListEl.addEventListener('click', (e) => {
   const card = e.target.closest('.track');
   if (!card) return;
   const id = card.dataset.id;
-  const act = e.target.dataset.act;
+  const actEl = e.target.closest('[data-act]');
+  const act = actEl ? actEl.dataset.act : e.target.dataset.act;
   if (act === 'play') { if (!QUEUE.includes(id)) enqueue(id); playId(id); }
   if (act === 'add') enqueue(id);
   if (act === 'next') enqueue(id, true);
@@ -504,6 +526,19 @@ audio.addEventListener('error', () => {
   if (activeEngine !== 'audio') return;
   showToast('Track unavailable — use a direct audio file URL (e.g. a .m4a), not a share-page link');
 });
+video.addEventListener('ended', () => {
+  if (activeEngine !== 'audio' || !useVideo) return;
+  if (repeatMode === 2) { video.currentTime = 0; video.play().catch(() => {}); }
+  else step(1);
+});
+video.addEventListener('timeupdate', () => {
+  if (activeEngine !== 'audio' || !useVideo || isSeeking || !video.duration) return;
+  paintProgress(video.currentTime, video.duration);
+});
+video.addEventListener('error', () => {
+  if (activeEngine !== 'audio' || !useVideo) return;
+  showToast('Video unavailable');
+});
 audio.addEventListener('timeupdate', () => {
   if (activeEngine !== 'audio' || isSeeking || !audio.duration) return;
   paintProgress(audio.currentTime, audio.duration);
@@ -514,6 +549,7 @@ seekEl.addEventListener('pointerup', () => {
   isSeeking = false;
   const f = seekEl.value / 1000;
   if (activeEngine === 'soundcloud' && scDur) scWidget.seekTo(Math.round(f * scDur));
+  else if (useVideo && video.duration) video.currentTime = f * video.duration;
   else if (audio.duration) audio.currentTime = f * audio.duration;
 });
 volEl.addEventListener('input', () => {
@@ -612,6 +648,8 @@ document.addEventListener('keydown', (e) => {
 function seekBy(sec) {
   if (activeEngine === 'soundcloud' && scDur) {
     scWidget.seekTo(Math.max(0, Math.min(scDur, scPos + sec * 1000)));
+  } else if (useVideo && video.duration) {
+    video.currentTime = Math.max(0, Math.min(video.duration, video.currentTime + sec));
   } else if (audio.duration) {
     audio.currentTime = Math.max(0, Math.min(audio.duration, audio.currentTime + sec));
   }
@@ -650,6 +688,8 @@ function mergeAdminSongs(base) {
       }
       // Manual Rap Fame play count survives.
       if (s.rapfamePlays) m.rapfamePlays = s.rapfamePlays;
+      // Video flag survives.
+      if (s.video !== undefined) m.video = s.video;
       // Plays come from the fresh base (sync keeps them current). A manually
       // entered Rap Fame count is added only when no scraped match exists.
       m.plays = b.plays || 0;
@@ -695,6 +735,7 @@ function openEdit(track) {
   $('#editDuration').value = track?.durationSec || '';
   $('#editRfPlays').value = track?.rapfamePlays || '';
   $('#editVisible').checked = track ? (track.visible !== false && !isHidden(track)) : true;
+  $('#editVideo').checked = track ? (track.video === true) : false;
   $('#editDelete').style.display = track ? '' : 'none';
   modal.hidden = false;
 }
@@ -720,6 +761,7 @@ if (editForm) {
       altSource: altUrl ? 'soundcloud' : undefined,
       durationSec: Number($('#editDuration').value) || 0,
       rapfamePlays: Number($('#editRfPlays').value) || 0,
+      video: $('#editVideo').checked,
       source: engine === 'soundcloud' ? 'soundcloud' : 'bandlab',
       visible: $('#editVisible').checked,
     };
