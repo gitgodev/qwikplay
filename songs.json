@@ -11,7 +11,7 @@
     "source": "soundcloud",
     "sourceUrl": "https://soundcloud.com/aaron2z/crashout",
     "releaseDate": "",
-    "plays": 0,
+    "plays": 155,
     "visible": true
   },
   {
@@ -26,7 +26,7 @@
     "source": "soundcloud",
     "sourceUrl": "https://soundcloud.com/aaron2z/hotboxflow",
     "releaseDate": "",
-    "plays": 0,
+    "plays": 144,
     "visible": true
   },
   {
@@ -41,7 +41,7 @@
     "source": "soundcloud",
     "sourceUrl": "https://soundcloud.com/aaron2z/falken",
     "releaseDate": "",
-    "plays": 0,
+    "plays": 1,
     "visible": true
   },
   {
@@ -55,7 +55,7 @@
     "source": "bandlab",
     "sourceUrl": "https://www.bandlab.com/realqwik/qsandps",
     "releaseDate": "2025-04-20",
-    "plays": 5442,
+    "plays": 5444,
     "altSourceUrl": "https://soundcloud.com/aaron2z/qs-n-ps",
     "altSource": "soundcloud",
     "visible": true
@@ -71,7 +71,7 @@
     "source": "bandlab",
     "sourceUrl": "https://www.bandlab.com/realqwik/this-that",
     "releaseDate": "2026-09-29",
-    "plays": 7990,
+    "plays": 8035,
     "altSourceUrl": "https://soundcloud.com/aaron2z/this-that",
     "altSource": "soundcloud",
     "visible": true
@@ -101,7 +101,7 @@
     "source": "bandlab",
     "sourceUrl": "https://www.bandlab.com/realqwik/untitled-nov-10-2024-504-am-c6f2d281",
     "releaseDate": "2024-11-10",
-    "plays": 1172,
+    "plays": 1173,
     "visible": true
   },
   {
@@ -187,7 +187,7 @@
     "source": "bandlab",
     "sourceUrl": "https://www.bandlab.com/realqwik/foldin-c68bade7",
     "releaseDate": "2025-01-15",
-    "plays": 704,
+    "plays": 705,
     "altSourceUrl": "https://soundcloud.com/aaron2z/26bows",
     "altSource": "soundcloud",
     "visible": true
@@ -235,6 +235,20 @@
     "visible": true
   },
   {
+    "id": "bl-forbidden",
+    "title": "Forbidden",
+    "artist": "qwik",
+    "engine": "audio",
+    "audioUrl": "https://static.bandlab.com/revisions-formatted/7897b4ee-189d-48e9-b69d-f8c5d74d0101/7897b4ee-189d-48e9-b69d-f8c5d74d0101.m4a",
+    "artwork": "https://bl-prod-images.azureedge.net/v1.3/songs/0e03bb1e-9b85-4da5-8ce0-83d389578b20/500x500",
+    "durationSec": 174,
+    "source": "bandlab",
+    "sourceUrl": "https://www.bandlab.com/realqwik/forbidden",
+    "releaseDate": "2026-11-05",
+    "plays": 562,
+    "visible": true
+  },
+  {
     "id": "bl-new-project-28ac2a31",
     "title": "Out All Night ",
     "artist": "qwik",
@@ -260,20 +274,6 @@
     "sourceUrl": "https://www.bandlab.com/realqwik/new-project-9cc5179c",
     "releaseDate": "2025-02-08",
     "plays": 517,
-    "visible": true
-  },
-  {
-    "id": "bl-forbidden",
-    "title": "Forbidden",
-    "artist": "qwik",
-    "engine": "audio",
-    "audioUrl": "https://static.bandlab.com/revisions-formatted/7897b4ee-189d-48e9-b69d-f8c5d74d0101/7897b4ee-189d-48e9-b69d-f8c5d74d0101.m4a",
-    "artwork": "https://bl-prod-images.azureedge.net/v1.3/songs/0e03bb1e-9b85-4da5-8ce0-83d389578b20/500x500",
-    "durationSec": 174,
-    "source": "bandlab",
-    "sourceUrl": "https://www.bandlab.com/realqwik/forbidden",
-    "releaseDate": "2026-11-05",
-    "plays": 482,
     "visible": true
   },
   {
@@ -459,7 +459,7 @@
     "source": "bandlab",
     "sourceUrl": "https://www.bandlab.com/realqwik/keep-it-n-motion-6b403e3e",
     "releaseDate": "2026-09-05",
-    "plays": 29,
+    "plays": 30,
     "visible": false
   },
   {
