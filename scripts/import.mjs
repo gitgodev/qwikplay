@@ -118,11 +118,59 @@ for (const p of bl.data || []) {
 const blTracks = [...seen.values()].sort((a, b) => (b.plays || 0) - (a.plays || 0));
 console.log(`found ${blTracks.length} BandLab songs`);
 
+// --- Rap Fame: scrape profile tracks (play counts + audio) ---
+console.log('Fetching Rap Fame profile…');
+const rfTracks = [];
+try {
+  const rfHtml = await (await fetch('https://rapfame.app/user/qwik', { headers: UA })).text();
+  const rfMatch = rfHtml.match(/<script id="__NEXT_DATA__"[^>]*>(.*?)<\/script>/s);
+  if (rfMatch) {
+    const rfData = JSON.parse(rfMatch[1]);
+    const rfEntities = rfData?.props?.pageProps?.entities?.tracks || {};
+    const rfIds = rfData?.props?.pageProps?.pageData?.tracksIds || [];
+    for (const tid of rfIds) {
+      const t = rfEntities[tid];
+      if (!t || !t.trackId) continue;
+      rfTracks.push({
+        id: 'rf-' + t.trackId,
+        title: t.name,
+        artist: 'qwik',
+        engine: 'audio',
+        audioUrl: t.url || '',
+        artwork: t.imgUrl || '',
+        durationSec: Math.round(t.lengthSec || 0),
+        source: 'rapfame',
+        sourceUrl: t.shareUrl || `https://rapfame.app/tracks/${t.trackId}`,
+        releaseDate: '',
+        plays: t.playbackCount || 0,
+      });
+    }
+  }
+  console.log(`found ${rfTracks.length} Rap Fame tracks`);
+} catch (e) { console.warn('  Rap Fame fetch failed:', e.message); }
+
 const blByNorm = new Map();
 for (const t of blTracks) {
   const k = normTitle(t.title);
   if (!blByNorm.has(k)) blByNorm.set(k, []);
   blByNorm.get(k).push(t);
+}
+
+// Combine Rap Fame play counts into matching existing tracks (true play count).
+const rfByNorm = new Map();
+for (const t of rfTracks) {
+  const k = normTitle(t.title);
+  if (!rfByNorm.has(k)) rfByNorm.set(k, t);
+}
+for (const t of blTracks) {
+  const rf = rfByNorm.get(normTitle(t.title));
+  if (rf) t.plays = (t.plays || 0) + (rf.plays || 0);
+}
+for (const t of scTracks) {
+  const rf = rfByNorm.get(normTitle(t.title));
+  if (rf && !blByNorm.has(normTitle(t.title))) {
+    t.plays = (t.plays || 0) + (rf.plays || 0);
+  }
 }
 const keptSc = [];
 let merged = 0;
@@ -139,7 +187,11 @@ for (const sc of scTracks) {
   } else keptSc.push(sc);
 }
 
-const upstream = [...keptSc, ...blTracks].map((t) => {
+// Rap Fame tracks that don't match an existing track become their own entries.
+const existingNorms = new Set([...keptSc, ...blTracks].map((t) => normTitle(t.title)));
+const rfNew = rfTracks.filter((t) => !existingNorms.has(normTitle(t.title)));
+
+const upstream = [...keptSc, ...blTracks, ...rfNew].map((t) => {
   const old = prevById.get(t.id);
   const manualAudio = old?.audioUrl && !old.audioUrl.startsWith('https://static.bandlab.com')
     ? old.audioUrl : null;
