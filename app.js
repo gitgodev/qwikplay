@@ -309,7 +309,7 @@ function toggleView() {
 function artFor(s, fallbackEmoji = '♪') {
   const art = (s?.artwork && !isBadArt(s.artwork)) ? s.artwork : (defaultArtwork() || '');
   if (art) {
-    return `<img src="${art}" alt="${escapeHtml(s?.title || 'cover')}" loading="lazy" draggable="false" referrerpolicy="no-referrer" data-t="${escapeHtml(s?.title || '?')}" onerror="this.onerror=null;this.src=window.__artFallback(this.dataset.t)" />`;
+    return `<img src="${art}" alt="${escapeHtml(s?.title || 'cover')}" loading="lazy" draggable="false" data-t="${escapeHtml(s?.title || '?')}" onerror="this.onerror=null;this.src=window.__artFallback(this.dataset.t); window.showShieldsBanner && window.showShieldsBanner()" />`;
   }
   if (s?.artwork) return `<img src="${window.__artFallback(s?.title)}" alt="${escapeHtml(s?.title || 'cover')}" draggable="false" />`;
   return fallbackEmoji;
@@ -631,9 +631,19 @@ audio.addEventListener('ended', () => {
   if (repeatMode === 2) { audio.currentTime = 0; audio.play().catch(() => {}); }
   else step(1);
 });
+let shieldsShown = false;
+function showShieldsBanner() {
+  if (shieldsShown) return;
+  shieldsShown = true;
+  const b = $('#shieldsBanner');
+  if (b) b.hidden = false;
+  setTimeout(() => { if (b) b.hidden = true; }, 12000);
+}
+window.showShieldsBanner = showShieldsBanner;
 audio.addEventListener('error', () => {
   if (activeEngine !== 'audio') return;
   showToast('Track unavailable — use a direct audio file URL (e.g. a .m4a), not a share-page link');
+  showShieldsBanner();
 });
 video.addEventListener('ended', () => {
   if (activeEngine !== 'audio' || !useVideo) return;
@@ -741,6 +751,10 @@ document.addEventListener('contextmenu', (e) => {
 document.addEventListener('dragstart', (e) => {
   if (e.target.closest('img')) e.preventDefault();
 });
+// Show shields hint if images fail to load (common on Brave/iOS).
+document.addEventListener('error', (e) => {
+  if (e.target && e.target.tagName === 'IMG') showShieldsBanner();
+}, true);
 
 function applyDeepLink() {
   const id = new URLSearchParams(location.search).get('t');

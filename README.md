@@ -75,6 +75,17 @@ commits `songs.json` — no secrets needed, no dependencies.
 4. Daily sync (`daily-sync.yml`) still commits `songs.json` to `main`, which
    re-triggers a deploy.
 
+## Brave / iOS troubleshooting
+
+If images or music won't load (common on Brave for iOS):
+- Tap the Brave 🦁 **Shields** icon → set **Shields** to **Down** for this site.
+- Brave blocks third-party CDNs (BandLab/SoundCloud) by default; the app
+  shows a banner hint when this happens.
+- SoundCloud tracks need the official widget; if it's blocked, use the
+  "Open original ↗" link per track.
+- BandLab `.m4a` streams inline; if your browser forces a download instead,
+  try Safari/Chrome.
+
 ## Deploy on Render (when ready, other account)
 
 1. Push folder to GitHub. 2. Render → New Static Site → empty build cmd,

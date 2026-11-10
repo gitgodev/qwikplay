@@ -338,6 +338,12 @@ button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible
 }
 .dev-toggle:hover { opacity: .9; color: #fff; }
 .dev-toggle.on { opacity: 1; color: var(--accent, #7df0c6); border-color: var(--accent, #7df0c6); }
+.shields-banner {
+  position: fixed; top: 60px; left: 50%; transform: translateX(-50%);
+  z-index: 40; max-width: 90vw; padding: 10px 16px;
+  background: rgba(255,180,120,.15); border: 1px solid rgba(255,180,120,.4);
+  border-radius: 12px; color: #ffc890; font-size: 13px; text-align: center;
+}
 /* ---- edit modal ---- */
 .modal {
   position: fixed; inset: 0; z-index: 60;
