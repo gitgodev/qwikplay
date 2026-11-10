@@ -93,6 +93,94 @@ let useVideo = false;
 let repeatMode = 0; // 0=off, 1=all, 2=one
 let playCounts = {};
 try { playCounts = JSON.parse(localStorage.getItem('playCounts') || '{}'); } catch { playCounts = {}; }
+// User favorites and playlists (per-browser, localStorage).
+let favorites = new Set();
+let favFilter = false;
+try { favorites = new Set(JSON.parse(localStorage.getItem('favorites') || '[]')); } catch { favorites = new Set(); }
+let playlists = [];
+try { playlists = JSON.parse(localStorage.getItem('playlists') || '[]'); } catch { playlists = []; }
+function saveFavorites() { try { localStorage.setItem('favorites', JSON.stringify([...favorites])); } catch {} }
+function savePlaylists() { try { localStorage.setItem('playlists', JSON.stringify(playlists)); } catch {} }
+function isFavorite(id) { return favorites.has(id); }
+function toggleFavorite(id) {
+  if (favorites.has(id)) favorites.delete(id); else favorites.add(id);
+  saveFavorites();
+  renderTracks();
+  showToast(favorites.has(id) ? 'Added to favorites' : 'Removed from favorites');
+}
+function createPlaylist(name) {
+  name = (name || '').trim();
+  if (!name) return;
+  if (playlists.some((p) => p.name === name)) { showToast('Playlist already exists'); return; }
+  playlists.push({ name, ids: [] });
+  savePlaylists();
+  renderPlaylistsModal();
+  showToast(`Created "${name}"`);
+}
+function deletePlaylist(name) {
+  playlists = playlists.filter((p) => p.name !== name);
+  savePlaylists();
+  renderPlaylistsModal();
+  showToast('Playlist deleted');
+}
+function addToPlaylist(name, id) {
+  const p = playlists.find((pl) => pl.name === name);
+  if (!p) return;
+  if (!p.ids.includes(id)) { p.ids.push(id); savePlaylists(); showToast(`Added to "${name}"`); }
+  else showToast('Already in playlist');
+}
+function removeFromPlaylist(name, id) {
+  const p = playlists.find((pl) => pl.name === name);
+  if (!p) return;
+  p.ids = p.ids.filter((x) => x !== id);
+  savePlaylists();
+  renderPlaylistsModal();
+}
+function renderPlaylistsModal() {
+  const el = $('#playlistsList');
+  if (!el) return;
+  if (!playlists.length) { el.innerHTML = '<div class="empty">No playlists yet. Create one above.</div>'; return; }
+  el.innerHTML = playlists.map((p) => `
+    <div style="margin-bottom:12px;padding:10px;border:1px solid var(--line);border-radius:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <strong>${escapeHtml(p.name)}</strong>
+        <button class="ghost danger" data-pldel="${escapeHtml(p.name)}">Delete</button>
+      </div>
+      ${p.ids.length ? p.ids.map((id) => {
+        const s = songById(id);
+        if (!s) return '';
+        return `<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:13px">
+          <span>${escapeHtml(s.title)}</span>
+          <span style="display:flex;gap:4px">
+            <button class="ghost" data-plplay="${escapeHtml(p.name)}" data-id="${s.id}">▶</button>
+            <button class="ghost" data-plrm="${escapeHtml(p.name)}" data-id="${s.id}">✕</button>
+          </span>
+        </div>`;
+      }).join('') : '<div class="empty" style="padding:6px">Empty playlist</div>'}
+    </div>
+  `).join('');
+  // wire
+  el.querySelectorAll('[data-pldel]').forEach((b) => b.addEventListener('click', () => { if (confirm('Delete playlist?')) deletePlaylist(b.dataset.pldel); }));
+  el.querySelectorAll('[data-plplay]').forEach((b) => b.addEventListener('click', () => { const id = b.dataset.id; if (!QUEUE.includes(id)) enqueue(id); playId(id); }));
+  el.querySelectorAll('[data-plrm]').forEach((b) => b.addEventListener('click', () => removeFromPlaylist(b.dataset.plrm, b.dataset.id)));
+}
+function openPlaylistPicker(trackId) {
+  if (!playlists.length) { const name = window.prompt('New playlist name:'); if (name) { createPlaylist(name); addToPlaylist(name.trim(), trackId); } return; }
+  const name = window.prompt('Add to playlist (type name, or "new:Name" to create):\n' + playlists.map((p) => p.name).join(', '));
+  if (!name) return;
+  if (name.toLowerCase().startsWith('new:')) {
+    const n = name.slice(4).trim();
+    createPlaylist(n);
+    addToPlaylist(n, trackId);
+  } else {
+    addToPlaylist(name.trim(), trackId);
+  }
+}
+function openPlaylistsModal() {
+  const m = $('#playlistsModal');
+  if (m) { renderPlaylistsModal(); m.hidden = false; }
+}
+function closePlaylistsModal() { const m = $('#playlistsModal'); if (m) m.hidden = false; m.hidden = true; }
 let toastTimer = null;
 
 // --- SoundCloud widget state ---
@@ -265,7 +353,8 @@ function renderTracks() {
   const filtered = pool.filter((s) => {
     const okQ = !q || `${s.title} ${s.artist}`.toLowerCase().includes(q);
     const okS = src === 'all' || s.source === src;
-    return okQ && okS;
+    const okFav = !favFilter || favorites.has(s.id);
+    return okQ && okS && okFav;
   });
   const sortMode = currentSort();
   const list = [...filtered].sort((a, b) => {
@@ -292,6 +381,7 @@ function renderTracks() {
         <button data-act="moveUp" class="ghost" title="Move up">↑</button>
         <button data-act="moveDown" class="ghost" title="Move down">↓</button>
       </div>` : '';
+    const fav = isFavorite(s.id);
     return `
     <div class="track ${isCurrent ? 'active' : ''} ${hidden ? 'is-hidden' : ''}" data-id="${s.id}">
       <div class="art" ${hidden ? '' : 'data-act="play" style="cursor:pointer" title="Play"'}>${artFor(s)}</div>
@@ -302,6 +392,8 @@ function renderTracks() {
           ${hidden ? '' : '<button data-act="play">Play</button>'}
           ${hidden ? '' : '<button data-act="next" class="ghost">Play next</button>'}
           ${hidden ? '' : '<button data-act="add" class="ghost">+ Up Next</button>'}
+          <button data-act="fav" class="ghost" title="Toggle favorite">${fav ? '❤' : '♡'}</button>
+          <button data-act="pladd" class="ghost" title="Add to playlist">+ Playlist</button>
           ${s.sourceUrl ? `<a class="src" href="${s.sourceUrl}" target="_blank" rel="noopener">Open original ↗</a>` : ''}
           ${s.altSourceUrl ? `<a class="src" href="${s.altSourceUrl}" target="_blank" rel="noopener">Also on ${escapeHtml(s.altSource)} ↗</a>` : ''}
         </div>
@@ -482,6 +574,8 @@ trackListEl.addEventListener('click', (e) => {
   if (act === 'hide') setVisible(id, false);
   if (act === 'show') setVisible(id, true);
   if (act === 'edit' && ADMIN) { const s = songById(id); if (s) openEdit(s); }
+  if (act === 'fav') { toggleFavorite(id); }
+  if (act === 'pladd') { openPlaylistPicker(id); }
   if (act === 'moveUp' && ADMIN) {
     const idx = SONGS.findIndex((s) => s.id === id);
     if (idx > 0) { [SONGS[idx - 1], SONGS[idx]] = [SONGS[idx], SONGS[idx - 1]]; renderTracks(); persistAdminSongs(); }
@@ -996,6 +1090,26 @@ const themeToggle = $('#themeToggle');
 if (themeToggle) themeToggle.addEventListener('click', toggleTheme);
 const viewToggle = $('#viewToggle');
 if (viewToggle) viewToggle.addEventListener('click', toggleView);
+const favFilterBtn = $('#favFilterBtn');
+if (favFilterBtn) {
+  favFilterBtn.addEventListener('click', () => {
+    favFilter = !favFilter;
+    favFilterBtn.textContent = favFilter ? '❤ Favorites (on)' : '❤ Favorites';
+    favFilterBtn.classList.toggle('on', favFilter);
+    renderTracks();
+  });
+}
+const playlistsBtn = $('#playlistsBtn');
+if (playlistsBtn) playlistsBtn.addEventListener('click', openPlaylistsModal);
+const newPlaylistBtn = $('#newPlaylistBtn');
+if (newPlaylistBtn) newPlaylistBtn.addEventListener('click', () => {
+  const name = window.prompt('New playlist name:');
+  if (name) createPlaylist(name);
+});
+const closePlaylistsBtn = $('#closePlaylistsBtn');
+if (closePlaylistsBtn) closePlaylistsBtn.addEventListener('click', () => { const m = $('#playlistsModal'); if (m) m.hidden = true; });
+const playlistsModal = $('#playlistsModal');
+if (playlistsModal) playlistsModal.addEventListener('click', (e) => { if (e.target === playlistsModal) playlistsModal.hidden = true; });
 renderTracks(); renderQueue(); drawWave(0);
 if (currentId && songById(currentId)) playId(currentId, { autoplay: false });
 else if (visibleSongs()[0]) {

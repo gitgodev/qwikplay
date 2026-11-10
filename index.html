@@ -42,6 +42,8 @@
       <button id="sortToggle" class="ghost" title="Toggle sort order" aria-label="Toggle sort">Sort: Newest</button>
       <button id="themeToggle" class="ghost" title="Toggle light/dark theme" aria-label="Toggle theme">🌙</button>
       <button id="viewToggle" class="ghost" title="Toggle list/grid view" aria-label="Toggle view">☰ List</button>
+      <button id="favFilterBtn" class="ghost" title="Show favorites only" aria-label="Favorites">❤ Favorites</button>
+      <button id="playlistsBtn" class="ghost" title="Manage playlists" aria-label="Playlists">☰ Playlists</button>
       <button id="contactBtn" class="ghost" title="Contact" aria-label="Contact">✉ Contact</button>
     </div>
   </header>
@@ -134,6 +136,16 @@
     <iframe id="scFrame" title="SoundCloud player" src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/tracks/2409782406&amp;auto_play=false&amp;show_artwork=false&amp;visual=false" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none" allow="autoplay"></iframe>
   </footer>
 
+  <div id="playlistsModal" class="modal" hidden>
+    <div class="modal-card">
+      <h2>Playlists</h2>
+      <div class="modal-actions" style="margin-bottom:8px">
+        <button id="newPlaylistBtn" class="play">+ New playlist</button>
+        <button id="closePlaylistsBtn" class="ghost">Close</button>
+      </div>
+      <div id="playlistsList"></div>
+    </div>
+  </div>
   <div id="contactModal" class="modal" hidden>
     <div class="modal-card">
       <h2>Contact</h2>
